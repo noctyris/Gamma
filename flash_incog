@@ -1,0 +1,7 @@
+#!/bin/bash
+clear -x
+make MODEL=n0110 clean
+clear -x
+make THEME_NAME=epsilon_light OMEGA_USERNAME="Noctyris" EPSILON_I18N=fr -j4
+clear -x
+sudo make epsilon.B_flash

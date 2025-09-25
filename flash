@@ -2,6 +2,6 @@
 clear -x
 make cleanall
 clear -x
-make THEME_NAME=gamma_dark OMEGA_USERNAME="Noctyris" EPSILON_I18N=fr -j4
+make THEME_NAME=gamma_dark OMEGA_USERNAME="Noctyris" -j4
 clear -x
 sudo make epsilon.A_flash

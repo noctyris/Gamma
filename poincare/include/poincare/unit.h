@@ -38,7 +38,7 @@ public:
   class Prefix {
     friend class Unit;
   public:
-    static constexpr int k_numberOfPrefixes = 13;
+    static constexpr int k_numberOfPrefixes = 21;
     static const Prefix * Prefixes();
     static const Prefix * EmptyPrefix();
     const char * symbol() const { return m_symbol; }
@@ -528,6 +528,10 @@ public:
    * accessed by their friend class Unit. */
   typedef UnitNode::Prefix Prefix;
   static constexpr const Prefix k_prefixes[Prefix::k_numberOfPrefixes] = {
+    Prefix("y", -24),
+    Prefix("z", -21),
+    Prefix("a", -18),
+    Prefix("f", -15),
     Prefix("p", -12),
     Prefix("n", -9),
     Prefix("μ", -6),
@@ -541,6 +545,10 @@ public:
     Prefix("M", 6),
     Prefix("G", 9),
     Prefix("T", 12),
+    Prefix("P", 15),
+    Prefix("E", 18),
+    Prefix("Z", 21),
+    Prefix("Y", 24),
   };
   typedef UnitNode::Representative Representative;
   typedef Representative::Prefixable Prefixable;
@@ -553,6 +561,8 @@ public:
     TimeRepresentative("week", 7.*24.*3600., Prefixable::None, Prefixable::None),
     TimeRepresentative("month", 365.25/12.*24.*3600., Prefixable::None, Prefixable::None),
     TimeRepresentative("year", 365.25*24.*3600., Prefixable::None, Prefixable::None),
+    TimeRepresentative("cent", 36525*24.*3600., Prefixable::None, Prefixable::None),
+    TimeRepresentative("mill", 365250*24.*3600., Prefixable::None, Prefixable::None),
   };
   typedef UnitNode::DistanceRepresentative DistanceRepresentative;
   static constexpr const DistanceRepresentative k_distanceRepresentatives[] = {
@@ -577,6 +587,8 @@ public:
   };
   typedef UnitNode::CurrentRepresentative CurrentRepresentative;
   static constexpr const CurrentRepresentative k_currentRepresentatives[] = { CurrentRepresentative("A", 1., Prefixable::All, Prefixable::LongScale) };
+  // TODO: add bytes sizes
+
   typedef UnitNode::TemperatureRepresentative TemperatureRepresentative;
   static constexpr const TemperatureRepresentative k_temperatureRepresentatives[] = {
     TemperatureRepresentative("K", 1., Prefixable::All, Prefixable::None),
@@ -642,9 +654,9 @@ public:
    * Maybe switch to a rational representation with two int. */
 
   /* Define access points to some prefixes and representatives. */
-  static constexpr int k_emptyPrefixIndex = 6;
+  static constexpr int k_emptyPrefixIndex = 10;
   static_assert(k_prefixes[k_emptyPrefixIndex].m_exponent == 0, "Index for the Empty Prefix is incorrect.");
-  static constexpr int k_kiloPrefixIndex = 9;
+  static constexpr int k_kiloPrefixIndex = 13;
   static_assert(k_prefixes[k_kiloPrefixIndex].m_exponent == 3, "Index for the Kilo Prefix is incorrect.");
   static constexpr int k_secondRepresentativeIndex = 0;
   static_assert(strings_equal(k_timeRepresentatives[k_secondRepresentativeIndex].m_rootSymbol, "s"), "Index for the Second Representative is incorrect.");
@@ -658,6 +670,10 @@ public:
   static_assert(strings_equal(k_timeRepresentatives[k_monthRepresentativeIndex].m_rootSymbol, "month"), "Index for the Month Representative is incorrect.");
   static constexpr int k_yearRepresentativeIndex = 6;
   static_assert(strings_equal(k_timeRepresentatives[k_yearRepresentativeIndex].m_rootSymbol, "year"), "Index for the Year Representative is incorrect.");
+  static constexpr int k_centRepresentativeIndex = 7;
+  static_assert(strings_equal(k_timeRepresentatives[k_centRepresentativeIndex].m_rootSymbol, "cent"), "Index for the Century Representative is incorrect.");
+  static constexpr int k_millRepresentativeIndex = 8;
+  static_assert(strings_equal(k_timeRepresentatives[k_millRepresentativeIndex].m_rootSymbol, "mill"), "Index for the Millenial Representative is incorrect.");
   static constexpr int k_meterRepresentativeIndex = 0;
   static_assert(strings_equal(k_distanceRepresentatives[k_meterRepresentativeIndex].m_rootSymbol, "m"), "Index for the Meter Representative is incorrect.");
   static constexpr int k_inchRepresentativeIndex = 4;
