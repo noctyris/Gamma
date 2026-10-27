@@ -31,12 +31,18 @@ public:
 #if HOME_DISPLAY_EXTERNALS
   int heapSize() { return k_externalHeapSize; }
   char * heap() { return m_externalHeap; }
+
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Winvalid-offsetof"
+  static constexpr size_t externalHeapOffset() { return offsetof(App, m_externalHeap); }
+  #pragma GCC diagnostic pop
+
+  static constexpr int k_externalHeapSize = 107674;
 #endif
 private:
   App(Snapshot * snapshot);
   Controller m_controller;
 #if HOME_DISPLAY_EXTERNALS
-  static constexpr int k_externalHeapSize = 80000;
   char m_externalHeap[k_externalHeapSize];
 #endif
   Window * m_window;

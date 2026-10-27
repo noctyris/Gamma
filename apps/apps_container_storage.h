@@ -14,6 +14,13 @@ public:
   App::Snapshot * appSnapshotAtIndex(int index) override;
   int appIndexFromSnapshot(App::Snapshot * snapshot) override;
   void * currentAppBuffer() override { return &m_apps; };
+
+  #if HOME_DISPLAY_EXTERNALS
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Winvalid-offsetof"
+  static constexpr size_t externalHeapOffset() { return offsetof(AppsContainerStorage, m_apps) + Home::App::externalHeapOffset(); }
+  #pragma GCC diagnostic pop
+  #endif
 private:
   union Apps {
   public:
@@ -23,12 +30,17 @@ private:
     ~Apps() {};
   private:
     APPS_CONTAINER_APPS_DECLARATION
+  public:
     Home::App m_homeApp;
+  private:
     OnBoarding::App m_onBoardingApp;
     HardwareTest::App m_hardwareTestApp;
     USB::App m_usbApp;
   };
   Apps m_apps;
+  // static_assert(sizeof(Apps) != 1); // Uncomment this line to log the Apps union size
+
+  // TODO: Assert code app is almost the same size as Home app
   APPS_CONTAINER_SNAPSHOT_DECLARATIONS
 };
 

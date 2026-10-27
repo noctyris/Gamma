@@ -12,18 +12,17 @@ def fileIfPath(path) {
 
 buildscript {
   repositories {
-    jcenter()
+    mavenCentral()
     google()
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.2.0'
-    classpath 'com.google.gms:google-services:4.2.0'
+    classpath 'com.android.tools.build:gradle:9.2.0'
   }
 }
 
 allprojects {
   repositories {
-    jcenter()
+    mavenCentral()
     google()
   }
   buildDir = BUILD_DIR
@@ -32,14 +31,14 @@ allprojects {
 apply plugin: 'com.android.application'
 
 android {
-  compileSdkVersion 29
+  namespace = "io.github.upsilon.simulator"
+  compileSdkVersion 37
   defaultConfig {
     applicationId "io.github.upsilon.simulator"
-    minSdkVersion 16
-    targetSdkVersion 29
-    def (major, minor, patch) = System.getenv('OMEGA_VERSION').toLowerCase().tokenize('.').collect{it.toInteger()}
-    versionCode major*1000000 + minor*10000 + patch * 100
-    versionName System.getenv('OMEGA_VERSION')
+    minSdkVersion 21
+    targetSdkVersion 33
+    versionCode Instant.now().getEpochSecond().toInteger()
+    versionName LocalDate.now().format("yyyyMMdd")+'-'+System.getenv('UPSILON_VERSION')
   }
   signingConfigs {
     environment {
@@ -52,11 +51,11 @@ android {
   buildTypes {
     release {
       minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android.txt')
+      //proguardFiles getDefaultProguardFile('proguard-android.txt')
       if (projectVariable('SIGNING_STORE_FILE')) {
-        signingConfig signingConfigs.environment
+        signingConfig = signingConfigs.environment
       } else {
-        signingConfig signingConfigs.debug
+        signingConfig = signingConfigs.debug
       }
     }
   }
@@ -70,13 +69,18 @@ android {
     }
   }
   lintOptions {
-    abortOnError false
-    checkReleaseBuilds false
+    abortOnError = false
+    checkReleaseBuilds = false
+  }
+  compileOptions { // currently Kotlin JVM doesn't support target 25
+    sourceCompatibility JavaVersion.VERSION_24
+    targetCompatibility JavaVersion.VERSION_24
   }
 }
 
 dependencies {
   implementation fileTree(include: ['*.jar'], dir: 'libs')
-  implementation "androidx.appcompat:appcompat:1.0.2"
-  implementation "com.google.android.gms:play-services-analytics:16.0.7"
+  implementation "androidx.appcompat:appcompat:1.7.1"
 }
+
+java{toolchain{languageVersion=JavaLanguageVersion.of(25)}}

@@ -46,6 +46,9 @@ volatile uint64_t MillisElapsed = 0;
 
 void init() {
   setSysTickFrequency(Ion::Device::Clocks::Config::HCLKFrequency);
+
+  SCB.SHPR2()->setPRI11(0x80); // Reduce SVCall handler priority to prevent blocking SysTicks, visible when running NWA apps
+
   CORTEX.SYST_CSR()->setCLKSOURCE(CORTEX::SYST_CSR::CLKSOURCE::AHB_DIV8);
   CORTEX.SYST_CSR()->setTICKINT(true);
   CORTEX.SYST_CSR()->setENABLE(true);

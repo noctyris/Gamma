@@ -1,3 +1,4 @@
+BOOTLOADER_SHARED_OFFSET = 0x3d0;
 
 SECTIONS {
   .signed_payload_prefix ORIGIN(FLASH) : {
@@ -34,7 +35,14 @@ SECTIONS {
     _isr_vector_table_end_ram = .;
   } >SRAM
 
-  .exam_mode_buffer ORIGIN(FLASH) + SIZEOF(.signed_payload_prefix) + SIZEOF(.kernel_header) + SIZEOF(.isr_vector_table) : {
+  .bootloader_shared ORIGIN(SRAM) + BOOTLOADER_SHARED_OFFSET : AT(ORIGIN(FLASH) + SIZEOF(.signed_payload_prefix) + SIZEOF(.kernel_header) + SIZEOF(.isr_vector_table) + SIZEOF(.slot_info)) {
+    _bootloader_shared_start = .;
+    KEEP(*(.bootloader_shared))
+    KEEP(*(.bootloader_shared.*))
+    _bootloader_shared_end = .;
+  } >SRAM
+
+  .exam_mode_buffer ORIGIN(FLASH) + SIZEOF(.signed_payload_prefix) + SIZEOF(.kernel_header) + SIZEOF(.isr_vector_table) + SIZEOF(.bootloader_shared) + SIZEOF(.slot_info) : {
     . = ALIGN(4K);
     _exam_mode_buffer_start = .;
     KEEP(*(.exam_mode_buffer))
@@ -48,6 +56,13 @@ SECTIONS {
     . = ORIGIN(FLASH) + USERLAND_OFFSET;
     KEEP(*(.userland_header));
   } > FLASH
+
+  .recovery_boot : {
+    . = ALIGN(4);
+    _recovery_boot_start = .;
+    KEEP(*(.recovery_boot));
+    _recovery_boot_end = .;
+  } >FLASH
 
   .text : {
     . = ALIGN(4);
@@ -71,7 +86,7 @@ SECTIONS {
     /* The data section is written to Flash but linked as if it were in RAM.
      *
      * This is required because its initial value matters (so it has to be in
-     * persistant memory in the first place), but it is a R/W area of memory
+     * persistent memory in the first place), but it is a R/W area of memory
      * so it will have to live in RAM upon execution (in linker lingo, that
      * translates to the data section having a LMA in Flash and a VMA in RAM).
      *
@@ -88,7 +103,7 @@ SECTIONS {
     _data_section_end_ram = .;
   } >SRAM AT> FLASH
 
-  .bss : {
+  .bss (NOLOAD) : {
     /* The bss section contains data for all uninitialized variables
      * So like the .data section, it will go in RAM, but unlike the data section
      * we don't care at all about an initial value.
@@ -97,6 +112,9 @@ SECTIONS {
      * need pointers to the beginning and end of this section. */
     . = ALIGN(4);
     _bss_section_start_ram = .;
+    _static_storage_start = .;
+    KEEP (*(.static_storage))
+    _static_storage_end = .;
     *(.bss)
     *(.bss.*)
     /* The compiler may choose to allocate uninitialized global variables as
@@ -119,6 +137,11 @@ SECTIONS {
     . = ALIGN(8);
     _stack_start = .;
   } >SRAM
+
+  .externalApps : {
+    . = ALIGN(64K);
+    _m_externalAppsFlashStart = .;
+  } > FLASH
 
   /DISCARD/ : {
     /* exidx and extab are needed for unwinding, which we don't use */

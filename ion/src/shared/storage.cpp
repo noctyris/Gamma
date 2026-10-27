@@ -6,7 +6,11 @@
 
 namespace Ion {
 
-uint32_t staticStorageArea[sizeof(Storage)/sizeof(uint32_t)] = {0};
+#ifdef __APPLE__
+uint32_t __attribute__((section("__DATA,.static_storage"))) staticStorageArea[sizeof(Storage)/sizeof(uint32_t)] = {0};
+#else
+uint32_t __attribute__((section(".static_storage"))) staticStorageArea[sizeof(Storage)/sizeof(uint32_t)] = {0};
+#endif
 
 Storage * Storage::sharedStorage() {
   static Storage * storage = new (staticStorageArea) Storage();

@@ -37,6 +37,17 @@ void __attribute__((interrupt, noinline)) isr_systick() {
   Ion::Device::Timing::MillisElapsed = t;
 }
 
+// https://developer.arm.com/documentation/dui0471/m/handling-processor-exceptions/supervisor-calls
+extern "C" void __attribute__((noinline, naked)) svcall_handler(void) {
+  __asm volatile(
+    "tst lr, #4         \n"
+    "ite eq             \n"
+    "mrseq r0, msp      \n"
+    "mrsne r0, psp      \n"
+    "b svcall_handler_c \n"
+  );
+}
+
 void __attribute__((noinline)) hard_fault_handler() {
   Bootloader::Recovery::crash_handler("HardFault");
 }
@@ -101,8 +112,8 @@ void __attribute__((noinline)) start() {
    * For example, static C++ objects are very likely to manipulate float values */
   Ion::Device::Board::initFPU();
 
-  
-  
+
+
   /* Copy data section to RAM
   * The data section is R/W but its initialization value matters. It's stored
   * in Flash, but linked as if it were in RAM. Now's our opportunity to copy

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="io.github.upsilon.simulator"
   android:installLocation="auto">
 
   <uses-feature android:glEsVersion="0x00020000" />
@@ -23,6 +22,7 @@
       android:alwaysRetainTaskState="true"
       android:launchMode="singleInstance"
       android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+      android:exported="true"
       >
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />

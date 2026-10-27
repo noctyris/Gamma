@@ -1,8 +1,8 @@
-<p align="center"><img src="https://github.com/Laporte12974/UpsilonDesign/blob/89a15953ae128aef8aa7d066dcaaf8d5c70f02a5/UPSILogo.png" /></p>
+<p align="center"><img src="https://github.com/TildeEthDoUsPart/UpsilonDesign/blob/89a15953ae128aef8aa7d066dcaaf8d5c70f02a5/UPSILogo.png" /></p>
 
 <p align="center">
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="cc by-nc-sa 4.0" src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-525252.svg?labelColor=292929&logo=creative%20commons&style=for-the-badge" /></a>
-  <a href="https://github.com/UpsilonNumworks/Upsilon/issues"><img alt="Issues" src="https://img.shields.io/github/issues/Lauryy06/Upsilon.svg?labelColor=292929&logo=git&style=for-the-badge" /></a>
+  <a href="https://github.com/UpsilonNumworks/Upsilon/issues"><img alt="Issues" src="https://img.shields.io/github/issues/UpsilonNumworks/Upsilon.svg?labelColor=292929&logo=git&style=for-the-badge" /></a>
   <br/>
   <a href="https://discord.gg/sbGvhWETAd"><img alt="Discord" src="https://img.shields.io/discord/663420259851567114?color=blue&labelColor=292929&label=chat%20-%20discord&logo=discord&style=for-the-badge" /></a>
 </p>
@@ -29,7 +29,7 @@ Upsilon est un fork d'Omega, un fork d'Epsilon, l'OS de NumWorks tournant sur le
 ### Site web
 
 Rendez-vous sur le [site d'Upsilon](https://getupsilon.web.app/) à la section "Installer".
-Si votre calculatrice est reconnue, qu'elle contient une version d'Epsilon inférieure à 16 et que votre navigateur accepte WebUSB, la page vous proposera d'installer Upsilon.  
+Si votre calculatrice est reconnue, qu'elle contient une version d'Epsilon inférieure à 16 et que votre navigateur accepte WebUSB, la page vous proposera d'installer Upsilon.
 Ne débranchez votre calculatrice qu'une fois l'installation terminée.
 
 ### Manuelle
@@ -106,7 +106,9 @@ nix-env -p gcc libpng libjpeg xorg.libX11 pkg-config freetype xorg.libXext pytho
 Il est recommandé d'utiliser [Homebrew](https://brew.sh/). Une fois installé, utilisez :
 
 ```bash
-brew install numworks/tap/epsilon-sdk
+brew install freetype imagemagick libpng libusb pkg-config python3
+python3 -m venv .venv
+.venv/bin/pip3 install setuptools lz4 pypng stringcase
 ```
 
 Et toutes les dépendances seront installées.
@@ -187,30 +189,32 @@ wsl --set-default-version 2
 WSL est maintenant installé.
 
 6. Installez maintenant la version pour ARM de GCC.
+
 ```bash
+sudo apt-get update
 sudo apt-get install build-essential git imagemagick libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev pkg-config gcc-arm-none-eabi binutils-arm-none-eabi
 ```
 
 ### Installation d'usbipd pour connecter la calculatrice à WSL (facultatif)
 
-Pour connecter la calculatrice, il faut installer cet [outil](https://github.com/dorssel/usbipd-win/releases/download/v1.3.0/usbipd-win_1.3.0.msi). Il permet de connecter des périphériques par Internet. Suivez les instructions pour l'installer.
+Pour connecter la calculatrice, il faut installer cet [outil](hthttps://github.com/dorssel/usbipd-win/releases/download/v5.0.0/usbipd-win_5.0.0_x64.msi). Il permet de connecter des périphériques par Internet. Suivez les instructions pour l'installer.
 
 #### Ubuntu
 
 1. Dans un terminal WSL Ubuntu, tapez :
 
 ```bash
-sudo apt install linux-tools-5.4.0-77-generic hwdata
+sudo apt install linux-tools-generic hwdata
 ```
 
-2. Editez /etc/sudoers pour que l'on puisse utiliser la commande usbip. Sur Ubuntu, cela est fait de cette manière :
+<!-- 2. Editez /etc/sudoers pour que l'on puisse utiliser la commande usbip. Sur Ubuntu, cela est fait de cette manière :
 
 ```bash
 sudo visudo
 ```
 
 3. Ajoutez `/usr/lib/linux-tools/5.4.0-77-generic` au début du secure_path. Après édition, la ligne devrait ressembler à:
-`Defaults secure_path="/usr/lib/linux-tools/5.4.0-77-generic:/usr/local/sbin:..."`
+`Defaults secure_path="/usr/lib/linux-tools/5.4.0-77-generic:/usr/local/sbin:..."` -->
 
 #### Debian
 
@@ -225,7 +229,7 @@ sudo apt install usbip hwdata usbutils
 1. Ouvrez à nouveau un PowerShell en mode administrateur et tapez :
 
 ```powershell
-  usbipd wsl list
+usbipd list
 ```
 
 Ceci va lister les périphériques USB connectés à l'ordinateur. Regardez le BUSID de votre "Numworks Calculator".
@@ -233,7 +237,8 @@ Ceci va lister les périphériques USB connectés à l'ordinateur. Regardez le B
 2. Maintenant, lancez cette commande en remplaçant <BUSID> par celui de votre calculatrice :
 
 ```powershell
-usbipd wsl attach --busid <BUSID>
+usbipd bind --busid <BUSID>
+usbipd attach --wsl --busid <BUSID>
 ```
 
 Le mot de passe de votre machine WSL vous sera demandé.
@@ -395,8 +400,8 @@ D'abord, installez emsdk :
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
-./emsdk install 1.40.1
-./emsdk activate 1.40.1
+./emsdk install 4.0.22
+./emsdk activate 4.0.22
 source emsdk_env.sh
 ```
 
@@ -408,6 +413,26 @@ make PLATFORM=simulator TARGET=web OMEGA_USERNAME="{Votre nom, maximum 15 caract
 ```
 
 Le simulateur se trouve dans `output/release/simulator/web/simulator.zip`
+
+</details>
+
+<details>
+
+<summary><b>Simulateur Android</b></summary>
+
+Assurez-vous d'avoir JDK 25 d'installé.
+Ensuite, téléchargez la toolchain Android version r27d comme suit :
+```
+export ANDROID_HOME=$PWD/android-sdk
+wget -nv https://gitlab.com/fdroid/sdkmanager/-/raw/master/sdkmanager.py
+python3 sdkmanager.py --licenses
+python3 sdkmanager.py --install "ndk-bundle;r27d"
+```
+Il ne vous reste plus qu'à lancer cette commande pour compiler Upsilon.
+```
+make -j$(nproc) PLATFORM=simulator TARGET=android
+```
+Le fichier compilé nommé `epsilon.apk` sera celui à installer sur le téléphone depuis votre gestionnaire de fichier. Fonctionne normalement à partir de Android 5.
 
 </details>
 

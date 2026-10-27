@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/Laporte12974/UpsilonDesign/blob/89a15953ae128aef8aa7d066dcaaf8d5c70f02a5/UPSILogo.png" /></p>
+<p align="center"><img src="https://github.com/TildeEthDoUsPart/UpsilonDesign/blob/89a15953ae128aef8aa7d066dcaaf8d5c70f02a5/UPSILogo.png" /></p>
 
 <p align="center">
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="cc by-nc-sa 4.0" src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-525252.svg?labelColor=292929&logo=creative%20commons&style=for-the-badge" /></a>
@@ -110,10 +110,12 @@ nix-shell -p gcc libpng libjpeg xorg.libX11 pkg-config freetype xorg.libXext pyt
 It's recommended to use [Homebrew](https://brew.sh/). Once it's installed, just run:
 
 ```bash
-brew install numworks/tap/epsilon-sdk
+brew install freetype imagemagick libpng libusb pkg-config python3
+python3 -m venv .venv
+.venv/bin/pip3 install setuptools lz4 pypng stringcase
 ```
 
-and it will install all dependencies.
+and all dependencies will be installed.
 
 <br>
 
@@ -181,31 +183,43 @@ This one allows virtual machines developed by Microsoft.
 ```powershell
 wsl --set-default-version 2
 ```
+
 5. Download [Ubuntu](https://www.microsoft.com/store/apps/9n6svws3rx71) from Microsoft store.
 
 WSL is now installed.
 
-6. Then install GCC cross compiler for ARM.
+6. Then Install GCC cross compiler for ARM. In your Ubuntu teminal, run:
+<!-- TODO: Test if `wsl --install` works better, and if WSL2 has not became the
+default -->
+
 ```bash
-apt-get install build-essential git imagemagick libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev pkg-config gcc-arm-none-eabi binutils-arm-none-eabi
+sudo apt-get update
+sudo apt-get install build-essential git imagemagick libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev pkg-config gcc-arm-none-eabi binutils-arm-none-eabi
 ```
 
 ### Usbipd installation to connect your calculator
-If you want to connect to the calculator, you have to connect to install this [tool](https://github.com/dorssel/usbipd-win/releases/download/v1.3.0/usbipd-win_1.3.0.msi). This will allow you to connect WSL to the calculator through internet. Follow the on screen information to install.
+
+If you want to connect to the calculator, you have to connect to install this
+[tool](https://github.com/dorssel/usbipd-win/releases/download/v5.0.0/usbipd-win_5.0.0_x64.msi).
+This will allow you to connect WSL to the calculator through internet. Follow
+the on screen information to install.
+
 #### Ubuntu
+
 1. In a WSL Ubuntu command prompt, type:
+
 ```bash
-sudo apt install linux-tools-5.4.0-77-generic hwdata
+sudo apt install linux-tools-generic hwdata
 ```
 
-2. Edit /etc/sudoers so that root can find the usbip command. On Ubuntu, run this command.
+<!-- 2. Edit /etc/sudoers so that root can find the usbip command. On Ubuntu, run this command.
 
 ```bash
 sudo visudo
 ```
 
 3. Add `/usr/lib/linux-tools/5.4.0-77-generic` to the beginning of secure_path. After editing, the line should look similar to this.
-`Defaults secure_path="/usr/lib/linux-tools/5.4.0-77-generic:/usr/local/sbin:..."`
+`Defaults secure_path="/usr/lib/linux-tools/5.4.0-77-generic:/usr/local/sbin:..."` -->
 
 #### Debian
 
@@ -222,14 +236,16 @@ And that's all for installation and set up.
 1. Open an admin PowerShell and type:
 
 ```powershell
-  usbipd wsl list
+usbipd list
 ```
 
 This will list your USB devices connected. Look at the BUSID column and remember the one for your calculator (it should be called "Numworks Calculator").
 2. Now run this command replacing `<BUSID>` by your calculator's USB port id:
 
 ```powershell
-usbipd wsl attach --busid <BUSID>
+usbipd bind --busid <BUSID>
+usbipd attach --wsl --busid <BUSID>
+
 ```
 
 It will ask you to type your WSL's password and will connect your calculator to WSL.
@@ -264,7 +280,7 @@ git checkout upsilon-dev
 
 ```bash
 make MODEL=n0100 clean
-make MODEL=n0100 EPSILON_I18N=en OMEGA_USERNAME="{Your name, max 15 characters}" -j(nproc)
+make MODEL=n0100 EPSILON_I18N=en OMEGA_USERNAME="{Your name, max 15 characters}" -j$(nproc)
 ```
 
 Now, run either:
@@ -280,7 +296,7 @@ to directly flash the calculator after pressing simultaneously `reset` and `6` b
 or:
 
 ```bash
-make MODEL=n0100 OMEGA_USERNAME="" binpack -j(nproc)
+make MODEL=n0100 OMEGA_USERNAME="" binpack -j$(nproc)
 ```
 
 to make binpack which you can flash to the calculator from [TI-Planet's WebDFU](https://ti-planet.github.io/webdfu_numworks/n0100/). Binpacks are a great way to share a custom build of Upsilon to friends.
@@ -391,8 +407,8 @@ First, install emsdk :
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
-./emsdk install 1.40.1
-./emsdk activate 1.40.1
+./emsdk install 4.0.22
+./emsdk activate 4.0.22
 source emsdk_env.sh
 ```
 
@@ -417,7 +433,7 @@ You need devkitPro and devkitARM installed and in your path (instructions [here]
 git clone --recursive https://github.com/UpsilonNumworks/Upsilon.git
 cd Upsilon
 git checkout upsilon-dev
-make PLATFORM=simulator TARGET=3ds -j(nproc)
+make PLATFORM=simulator TARGET=3ds -j$(nproc)
 ```
 
 You can then put epsilon.3dsx on a SD card to run it from the HBC or use 3dslink to launch it over the network:
@@ -428,17 +444,35 @@ You can then put epsilon.3dsx on a SD card to run it from the HBC or use 3dslink
 
 </details>
 
-<br>
+<details>
+
+<summary><b>Android Simulator</b></summary>
+
+Make sure you have JDK 25 installed.
+Then, download the Android toolchain r27d as following :
+```
+export ANDROID_HOME=$PWD/android-sdk
+wget -nv https://gitlab.com/fdroid/sdkmanager/-/raw/master/sdkmanager.py
+python3 sdkmanager.py --licenses
+python3 sdkmanager.py --install "ndk-bundle;r27d"
+```
+All you have to do is run this command to compile Upsilon.
+```
+make -j$(nproc) PLATFORM=simulator TARGET=android
+```
+The compiled file named `epsilon.apk` will be the one to install on the phone from your file manager. Should work on Android 5+.
+
+</details>
 
 <details>
   <summary><b>Casio fx-CG-series Port</b></summary>
-  
+
 First, install gint and fxsdk along with a cross compiler for the calculator. There are instructions for this (in French, but Google Translate works well enough) [here](https://www.planet-casio.com/Fr/forums/topic16614-last-giteapc-installer-et-mettre-a-jour-automatiquement-des-projets-gitea.html).
 
 Next:
 ```bash
 git clone --recursive https://github.com/UpsilonNumworks/Upsilon.git
-cd Omega
+cd Upsilon
 git checkout upsilon-dev
 make PLATFORM=simulator TARGET=fxcg -j$(nproc)
 ```

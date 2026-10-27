@@ -39,6 +39,46 @@ void python_error_end() {
     delete Module.___temp_python_error;
   });
 }
+
+__attribute__((noinline))
+void python_execution_end() {
+  EM_ASM({
+    Module.___temp_storage_dump = [];
+  });
+
+  for(size_t i = 0; i < (size_t)Ion::Storage::sharedStorage()->numberOfRecords(); i++) {
+    Ion::Storage::Record record = Ion::Storage::sharedStorage()->recordAtIndex(i);
+    const char * name = record.fullName();
+    const char * content = (const char *)record.value().buffer;
+    size_t size = record.value().size;
+
+    EM_ASM({
+      const filename = Module.UTF8ToString($0);
+      const name = filename.replace(/\\.[^/.]+$/, "");
+      const type = filename.split('.').pop();
+
+      const code = type == "py" ? Module.UTF8ToString($1 + 1, $2) : Module.UTF8ToString($1, $2);
+      Module.___temp_storage_dump.push({
+        name,
+        type,
+        code,
+      });
+    }, name, content, size);
+  }
+
+  // window isn't defined on Node (CI)
+  EM_ASM({
+    if (typeof window !== 'undefined') {
+      window.postMessage({
+        type: 'epsilon_micropython_executionEnvironment_runCode_finished',
+        value: Module.___temp_storage_dump,
+      });
+    }
+    delete Module.___temp_storage_dump;
+  });
+
+
+}
 #endif
 
 #if defined _FXCG || defined NSPIRE_NEWLIB
@@ -173,6 +213,11 @@ bool MicroPython::ExecutionEnvironment::runCode(const char * str) {
 
   assert(sCurrentExecutionEnvironment == this);
   sCurrentExecutionEnvironment = nullptr;
+
+  #ifdef __EMSCRIPTEN__
+  python_execution_end();
+  #endif
+
   return runSucceeded;
 }
 
@@ -375,11 +420,6 @@ void nlr_jump_fail(void *val) {
 
 
 #if defined _FXCG || defined NSPIRE_NEWLIB
-void do_mp_lexer_new_from_file(const char * filename,mp_lexer_t ** res) {
-  mp_reader_t reader;
-  mp_reader_new_file(&reader, filename);
-  *res=mp_lexer_new(qstr_from_str(filename), reader);
-}
 
 // Code from MicroPython's reader.c
 #include <sys/stat.h>
@@ -394,7 +434,7 @@ typedef struct _mp_reader_posix_t {
     byte buf[20];
 } mp_reader_posix_t;
 
-STATIC mp_uint_t mp_reader_posix_readbyte(void *data) {
+static mp_uint_t mp_reader_posix_readbyte(void *data) {
     mp_reader_posix_t *reader = (mp_reader_posix_t *)data;
     if (reader->pos >= reader->len) {
         if (reader->len == 0) {
@@ -414,7 +454,7 @@ STATIC mp_uint_t mp_reader_posix_readbyte(void *data) {
     return reader->buf[reader->pos++];
 }
 
-STATIC void mp_reader_posix_close(void *data) {
+static void mp_reader_posix_close(void *data) {
     mp_reader_posix_t *reader = (mp_reader_posix_t *)data;
     if (reader->close_fd) {
         MP_THREAD_GIL_EXIT();
@@ -453,9 +493,16 @@ void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
     }
     mp_reader_new_file_from_fd(reader, fd, true);
 }
+
+void do_mp_lexer_new_from_file(const char * filename,mp_lexer_t ** res) {
+  mp_reader_t reader;
+  mp_reader_new_file(&reader, filename);
+  *res=mp_lexer_new(qstr_from_str(filename), reader);
+}
 #endif
 
-mp_lexer_t * mp_lexer_new_from_file(const char * filename) {
+mp_lexer_t * mp_lexer_new_from_file(qstr file_qstr) {
+  const char * filename = qstr_str(file_qstr);
   if (sScriptProvider != nullptr) {
     const char * script = sScriptProvider->contentOfScript(filename, true);
     if (script != nullptr) {
@@ -470,7 +517,7 @@ mp_lexer_t * mp_lexer_new_from_file(const char * filename) {
 #ifdef NSPIRE_NEWLIB
   mp_lexer_t * res=0;
   do_mp_lexer_new_from_file(filename,&res);
-  return res;  
+  return res;
 #endif
   mp_raise_OSError(MP_ENOENT);
 }

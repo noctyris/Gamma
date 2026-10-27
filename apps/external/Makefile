@@ -3,6 +3,7 @@ ifdef HOME_DISPLAY_EXTERNALS
 app_external_src = $(addprefix apps/external/,\
 	extapp_api.cpp \
 	archive.cpp \
+	nwa.cpp \
 )
 
 $(eval $(call depends_on_image,apps/home/controller.cpp,apps/external/external_icon.png))

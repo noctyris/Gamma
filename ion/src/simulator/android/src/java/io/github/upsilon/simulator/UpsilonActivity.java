@@ -11,10 +11,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.Tracker;
-import com.google.android.gms.analytics.HitBuilders;
-
 import org.libsdl.app.SDLActivity;
 import org.libsdl.app.SDL;
 

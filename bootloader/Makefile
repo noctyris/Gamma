@@ -14,6 +14,7 @@ bootloader_src += $(addprefix bootloader/slots/, \
   slot.cpp \
   userland_header.cpp \
   kernel_header.cpp \
+  bootloader_header.cpp \
 )
 
 bootloader_src += $(addprefix bootloader/drivers/, \
@@ -37,6 +38,7 @@ bootloader_src += $(addprefix bootloader/interface/menus/, \
   warning.cpp \
   slot_recovery.cpp \
   crash.cpp \
+  upsilon_recovery.cpp \
 )
 
 bootloader_images = $(addprefix bootloader/, \

@@ -17,3 +17,5 @@ ion_device_src += $(addprefix ion/src/device/bootloader/boot/, \
 ion_device_src += $(addprefix ion/src/device/bootloader/, \
   platform_info.cpp \
 )
+
+$(call object_for,ion/src/device/bootloader/platform_info.cpp): CXXFLAGS += $(snapshot_includes) -DAPPS_CONTAINER_APPS_DECLARATION="$(apps_declaration)" -DAPPS_CONTAINER_SNAPSHOT_DECLARATIONS="$(snapshots_declaration)" -DAPPS_CONTAINER_SNAPSHOT_CONSTRUCTORS="$(snapshots_construction)" -DAPPS_CONTAINER_SNAPSHOT_LIST="$(snapshots_list)" -DAPPS_CONTAINER_SNAPSHOT_COUNT=$(snapshots_count) -DEPSILON_APPS_NAMES=$(epsilon_app_names)

@@ -292,9 +292,9 @@ bool Expression::getLinearCoefficients(char * variables, int maxVariableSize, Ex
   return !isMultivariablePolynomial;
 }
 
-bool Expression::isDefinedCosineOrSine(Context * context, Preferences::ComplexFormat complexFormat, Preferences::AngleUnit angleUnit) const {
+bool Expression::isDefinedCosineOrSineOrTangent(Context * context, Preferences::ComplexFormat complexFormat, Preferences::AngleUnit angleUnit) const {
   ExpressionNode::Type t = type();
-  if (t == ExpressionNode::Type::Cosine || t == ExpressionNode::Type::Sine) {
+  if (t == ExpressionNode::Type::Cosine || t == ExpressionNode::Type::Sine || t == ExpressionNode::Type::Tangent) {
     float r = childAtIndex(0).approximateToScalar<float>(context, complexFormat, angleUnit);
     if (!std::isnan(r)) {
       return true;
@@ -304,7 +304,7 @@ bool Expression::isDefinedCosineOrSine(Context * context, Preferences::ComplexFo
 }
 
 bool Expression::isBasedIntegerCappedBy(const char * stringInteger) const {
-  return type() == ExpressionNode::Type::BasedInteger && (Integer::NaturalOrder(convert<BasedInteger>().integer(), Integer(stringInteger)) < 0);
+  return type() == ExpressionNode::Type::BasedInteger || (type() == ExpressionNode::Type::Opposite && childAtIndex(0).type() == ExpressionNode::Type::BasedInteger); // && (Integer::NaturalOrder(convert<BasedInteger>().integer(), Integer(stringInteger)) < 0);
 }
 
 bool Expression::isDivisionOfIntegers() const {

@@ -63,7 +63,7 @@ bool Boot::isKernelPatched(const Slot & s) {
   return  *(uint32_t *)(origin_isr + sizeof(uint32_t) * 7) == ((uint32_t)&_fake_isr_function_start) + 1;
 }
 
-__attribute((section(".fake_isr_function"))) __attribute__((used)) void Boot::flash_interrupt() {
+__attribute__((section(".fake_isr_function"))) __attribute__((used)) void Boot::flash_interrupt() {
   // a simple function
   Ion::Device::Flash::ClearInternalFlashErrors();
   asm("bx lr");
@@ -103,9 +103,9 @@ void Boot::patchKernel(const Slot & s) {
 void Boot::bootSlot(Bootloader::Slot s) {
   config()->setSlot(&s);
   if (!s.userlandHeader()->isOmega() && !s.userlandHeader()->isUpsilon()) {
-    // We are trying to boot epsilon, so we check the version and show an advertisement if needed
+    // We are trying to boot epsilon, so we check the version and show a warning if needed
     const char * version = s.userlandHeader()->version();
-    const char * min = "23.1.1";
+    const char * min = "26.4.1";
     int versionSum = Utility::versionSum(version, strlen(version));
     int minimalVersionTrigger = Utility::versionSum(min, strlen(min));
     if (versionSum >= minimalVersionTrigger) {

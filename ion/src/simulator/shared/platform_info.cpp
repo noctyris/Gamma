@@ -22,7 +22,7 @@
 #endif
 
 namespace Ion {
-extern char staticStorageArea[];
+extern __attribute__((weak)) char staticStorageArea[];
 }
 constexpr void * storageAddress = &(Ion::staticStorageArea);
 
@@ -148,3 +148,5 @@ void * storage_address(){
 const void * Ion::storageAddress() {
   return platform_infos.storage_address();
 }
+
+void Ion::updateSlotInfo() {}

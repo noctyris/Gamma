@@ -39,6 +39,11 @@ bool isExamModeAndFileNotExecutable(const TarHeader* tar) {
   return GlobalPreferences::sharedGlobalPreferences()->isInExamMode() && (tar->mode[4] & 0x01) == 0;
 }
 
+bool isArchiveHeaderValid() {
+  const TarHeader* tar = reinterpret_cast<const TarHeader*>(0x90200000);
+  return isSane(tar);
+}
+
 bool fileAtIndex(size_t index, File &entry) {
   if (index == -1) {
     return false;
@@ -56,13 +61,13 @@ bool fileAtIndex(size_t index, File &entry) {
    * TAR files are comprised of a set of records aligned to 512 bytes boundary
    * followed by data.
    */
-  
+
   for(;;) {
     // Calculate the size
     size = 0;
     for (int i = 0; i < 11; i++)
       size = size * 8 + (tar->size[i] - '0');
-    
+
     // Check if we found our file.
     if (index == 0) {
       // If yes, check for sanity and for exam mode stuff
@@ -92,7 +97,7 @@ bool fileAtIndex(size_t index, File &entry) {
     }
     index--;
   }
-  
+
   // Achievement unlock: How did we get there ?
   return false;
 }
@@ -135,6 +140,10 @@ extern "C" void extapp_main(void);
 uint32_t executeFile(const char *name, void * heap, const uint32_t heapSize) {
   extapp_main();
   return 0;
+}
+
+bool isArchiveHeaderValid() {
+  return true;
 }
 
 #endif

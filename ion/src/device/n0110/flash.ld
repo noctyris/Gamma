@@ -54,6 +54,7 @@ SECTIONS {
    * internal flash to the external flash. */
   .text.internal_to_external : {
     *(.text._ZL22jump_to_external_flashv*)
+    *(.text.svcall_handler*) /* The SVC handler must be located in the ISR table which is stored in internal, but depends on lots of external functions. It's only called from external */
   } >INTERNAL_FLASH
 
   /* Use boot routine and required dependencies */
@@ -71,6 +72,7 @@ SECTIONS {
     *(.text.__assert)
     *(.text.memcpy)
     *(.text.memset)
+    *(.text.__udivmoddi4)
     /*
     *(.text.strlen)
     *(.text.strncmp)
@@ -168,7 +170,7 @@ SECTIONS {
     _data_section_end_ram = .;
   } >SRAM AT> INTERNAL_FLASH
 
-  .bss : {
+  .bss (NOLOAD) : {
     /* The bss section contains data for all uninitialized variables
      * So like the .data section, it will go in RAM, but unlike the data section
      * we don't care at all about an initial value.
@@ -177,6 +179,9 @@ SECTIONS {
      * need pointers to the beginning and end of this section. */
     . = ALIGN(4);
     _bss_section_start_ram = .;
+    _static_storage_start = .;
+    KEEP (*(.static_storage))
+    _static_storage_end = .;
     *(.bss)
     *(.bss.*)
     /* The compiler may choose to allocate uninitialized global variables as

@@ -124,3 +124,14 @@ void __attribute__((interrupt, noinline)) isr_systick() {
   t++;
   Ion::Device::Timing::MillisElapsed = t;
 }
+
+// https://developer.arm.com/documentation/dui0471/m/handling-processor-exceptions/supervisor-calls
+extern "C" void __attribute__((noinline, naked)) svcall_handler(void) {
+  __asm volatile(
+    "tst lr, #4         \n"
+    "ite eq             \n"
+    "mrseq r0, msp      \n"
+    "mrsne r0, psp      \n"
+    "b svcall_handler_c \n"
+  );
+}

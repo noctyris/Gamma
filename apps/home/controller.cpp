@@ -12,6 +12,7 @@ extern "C" {
 #ifdef HOME_DISPLAY_EXTERNALS
 #include "../external/external_icon.h"
 #include "../external/archive.h"
+#include "../external/nwa.h"
 #include <string.h>
 #endif
 
@@ -164,6 +165,22 @@ bool Controller::handleEvent(Ion::Events::Event event) {
       return m_view.selectableTableView()->selectCellAtLocation(column, row);
     }
   }
+
+  #if HOME_DISPLAY_EXTERNALS
+  // Launch NWA app
+  // TODO: Integrate into home grid, like extapp (Upsilon) external apps
+  if (event == Ion::Events::Pi) {
+    External::NWA::executeApp(0);
+    ((App*)m_app)->redraw();
+    return true;
+  }
+
+  if (event == Ion::Events::Sqrt) {
+    External::NWA::executeApp(1);
+    ((App*)m_app)->redraw();
+    return true;
+  }
+  #endif
 
   return false;
 }

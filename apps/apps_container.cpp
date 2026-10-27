@@ -17,9 +17,17 @@ extern "C" {
 using namespace Poincare;
 using namespace Shared;
 
+// We initialize g_appsContainerStorage by hand to be able to retrieve its
+// address inside UserlandHeader
+alignas(AppsContainerStorage) uint8_t g_appsContainerStorageRaw[sizeof(AppsContainerStorage)];
+
+static AppsContainerStorage * g_appsContainerStorage = nullptr;
+
 AppsContainer * AppsContainer::sharedAppsContainer() {
-  static AppsContainerStorage appsContainerStorage;
-  return &appsContainerStorage;
+  if (!g_appsContainerStorage) {
+    g_appsContainerStorage = new (g_appsContainerStorageRaw) AppsContainerStorage();
+  }
+  return g_appsContainerStorage;
 }
 
 AppsContainer::AppsContainer() :
@@ -344,7 +352,7 @@ void AppsContainer::run() {
    * called. During a longjump, the stack pointer is set to this stored stack
    * pointer value, so the method where we call setjump must remain in the call
    * tree for the jump to work. */
-  Poincare::ExceptionCheckpoint ecp;
+  Poincare::ExceptionCheckpoint ecp(false);
 
   if (ExceptionRun(ecp)) {
     /* Normal execution. The exception checkpoint must be created before

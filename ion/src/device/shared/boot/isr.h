@@ -8,6 +8,9 @@ extern "C" {
 void start();
 void abort();
 void isr_systick();
+void recovery_start();
+
+void svcall_handler();
 
 #ifdef __cplusplus
 }
