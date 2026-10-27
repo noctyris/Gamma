@@ -27,35 +27,30 @@ int ContributorsController::reusableCellCount(int type) {
   return k_totalNumberOfCell;
 }
 
-constexpr static int s_numberOfDevelopers = 18;
+constexpr static int s_numberOfDevelopers = 19;
 constexpr static int s_numberOfUpsilonDevelopers = 5;
+constexpr static int s_numberOfGammaDevelopers = 1;
 constexpr static I18n::Message s_developersUsernames[s_numberOfDevelopers] = {
-    I18n::Message::PLaurianFournier,
-    I18n::Message::PYannCouturier,
-    I18n::Message::PDavidLuca,
-    I18n::Message::PLoicE,
-    I18n::Message::PVictorKretz,
-    I18n::Message::PQuentinGuidee,
-    I18n::Message::PJoachimLeFournis,
-    I18n::Message::PMaximeFriess,
-    I18n::Message::PJeanBaptisteBoric,
-    I18n::Message::PSandraSimmons,
-    I18n::Message::PDavid,
-    I18n::Message::PDamienNicolet,
-    I18n::Message::PEvannDreumont,
-    I18n::Message::PSzaboLevente,
-    I18n::Message::PVenceslasDuet,
-    I18n::Message::PCharlotteThomas,
-    I18n::Message::PAntoninLoubiere,
+    I18n::Message::PHoelJamier,      I18n::Message::PLaurianFournier,
+    I18n::Message::PYannCouturier,   I18n::Message::PDavidLuca,
+    I18n::Message::PLoicE,           I18n::Message::PVictorKretz,
+    I18n::Message::PQuentinGuidee,   I18n::Message::PJoachimLeFournis,
+    I18n::Message::PMaximeFriess,    I18n::Message::PJeanBaptisteBoric,
+    I18n::Message::PSandraSimmons,   I18n::Message::PDavid,
+    I18n::Message::PDamienNicolet,   I18n::Message::PEvannDreumont,
+    I18n::Message::PSzaboLevente,    I18n::Message::PVenceslasDuet,
+    I18n::Message::PCharlotteThomas, I18n::Message::PAntoninLoubiere,
     I18n::Message::PCyprienMejat,
-    I18n::Message::PHoelJamier,
 };
 
 void ContributorsController::willDisplayCellForIndex(HighlightCell *cell,
                                                      int index) {
   MessageTableCellWithBuffer *myTextCell = (MessageTableCellWithBuffer *)cell;
   myTextCell->setAccessoryText(I18n::translate(s_developersUsernames[index]));
-  if (index < s_numberOfUpsilonDevelopers) {
+  if (index < s_numberOfGammaDevelopers) {
+    myTextCell->setTextColor(KDColor::RGB24(0xe9be17));
+  } else if (index <
+             s_numberOfUpsilonDevelopers + s_numberOfUpsilonDevelopers) {
     myTextCell->setTextColor(KDColor::RGB24(0x5e81ac));
   } else {
     myTextCell->setTextColor(KDColor::RGB24(0xc53431));
