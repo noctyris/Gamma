@@ -334,7 +334,8 @@ public:
     Root,
     NthRoot,
     Fraction,
-    RightOfPower
+    RightOfPower,
+    Unit
   };
   virtual LayoutShape leftLayoutShape() const = 0;
   virtual LayoutShape rightLayoutShape() const { return leftLayoutShape(); }

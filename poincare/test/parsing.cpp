@@ -353,6 +353,18 @@ QUIZ_CASE(poincare_parsing_units_without_underscore) {
   assert_parsed_expression_is("1→f(t)", Store::Builder(BasedInteger::Builder(1), Function::Builder("f", 1, Symbol::Builder("t", 1))));
   // The unit is displayed without the underscore when the preference is set.
   assert_layout_serialize_to(meter.createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "m");
+  /* A value and a unit are displayed with a space in between, which is more
+   * readable. This space is not stored in the expression (which serializes as
+   * "1×_m") and is ignored when the layout is parsed back. */
+  const Expression oneMeter = parse_expression("1 m", nullptr, false);
+  const Layout oneMeterLayout = oneMeter.createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits);
+  assert_layout_serialize_to(oneMeterLayout, "1 m");
+  char parsingBuffer[256];
+  oneMeterLayout.serializeForParsing(parsingBuffer, 256);
+  assert_parsed_expression_is(parsingBuffer, Multiplication::Builder(BasedInteger::Builder(1), meter));
+  /* A product of units keeps the middle dot so that m·m is not read as mm. */
+  assert_layout_serialize_to(parse_expression("m×m", nullptr, false).createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "m·m");
+  assert_expression_serialize_to(oneMeter, "1×_m", DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits);
 
   preferences->setUnitsWithoutUnderscore(previousUnitsWithoutUnderscore);
   // Serialization keeps the underscore so that the unit can be parsed back.

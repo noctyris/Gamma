@@ -127,9 +127,19 @@ Expression MultiplicationNode::setSign(Sign s, ReductionContext reductionContext
  * --------------+---------+---------+-----------+-------------+---------------+------+---------+----------+-------------
  * Hexa/Binary   |    •    |   •     |    •      |     •       |      •        |  •   |    •    |    •     |    •
  *
- * */
+ * The 'Unit' layout shape is a special case: a unit juxtaposed with another
+ * expression (a value, a symbol, a parenthesis, ...) is separated by a space,
+ * which makes expressions like "1 m" or "3.6 km/h" more readable. This space
+ * only exists in the layout: the expression itself holds no space and is
+ * serialized (and parsed back) without any, see UnitNode. */
 
 static int operatorSymbolBetween(ExpressionNode::LayoutShape left, ExpressionNode::LayoutShape right) {
+  if (right == ExpressionNode::LayoutShape::Unit
+      && left != ExpressionNode::LayoutShape::Unit)
+  {
+    /* '4' stands for ' ' (space). */
+    return 4;
+  }
   switch (left) {
     case ExpressionNode::LayoutShape::BinaryHexadecimal:
       return 1;
@@ -157,6 +167,9 @@ static int operatorSymbolBetween(ExpressionNode::LayoutShape left, ExpressionNod
       }
     case ExpressionNode::LayoutShape::OneLetter:
     case ExpressionNode::LayoutShape::MoreLetters:
+    /* A unit behaves like a one-letter symbol when it multiplies something
+     * else: m·m keeps the middle dot to be told apart from mm. */
+    case ExpressionNode::LayoutShape::Unit:
       switch (right) {
         case ExpressionNode::LayoutShape::Decimal:
           return 2;
@@ -190,13 +203,25 @@ CodePoint MultiplicationNode::operatorSymbol() const {
   /* ø --> 0
    * · --> 1
    * × --> 2
-   * * --> 3 */
+   * * --> 3
+   * ' ' --> 4 (space displayed between a value and a unit) */
   int sign = -1;
   if(preferences->symbolOfMultiplication() == Poincare::Preferences::SymbolMultiplication::Auto){
+      bool allOperatorsAreSpaces = true;
       for (int i = 0; i < numberOfChildren() - 1; i++) {
       /* The operator symbol must be the same for all operands of the multiplication.
-      * If one operator has to be '×', they will all be '×'. Idem for '·'. */
-      sign = std::max(sign, operatorSymbolBetween(childAtIndex(i)->rightLayoutShape(), childAtIndex(i+1)->leftLayoutShape()));
+      * If one operator has to be '×', they will all be '×'. Idem for '·'.
+      * A space is only displayed when the whole multiplication is a juxtaposition
+      * between a value and a unit, as in 1 m or 5 km. */
+      int signBetween = operatorSymbolBetween(childAtIndex(i)->rightLayoutShape(), childAtIndex(i+1)->leftLayoutShape());
+      if (signBetween == 4) {
+        continue;
+      }
+      allOperatorsAreSpaces = false;
+      sign = std::max(sign, signBetween);
+    }
+    if (allOperatorsAreSpaces) {
+      sign = 4;
     }
   } else {
     switch(preferences->symbolOfMultiplication()){
@@ -218,6 +243,8 @@ CodePoint MultiplicationNode::operatorSymbol() const {
       return UCodePointMiddleDot;
     case 3:
       return UCodePointStar;
+    case 4:
+      return ' ';
     default:
       return UCodePointMultiplicationSign;
   }

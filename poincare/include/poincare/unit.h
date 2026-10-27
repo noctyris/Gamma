@@ -500,7 +500,9 @@ public:
   // Simplification
   Expression shallowReduce(ReductionContext reductionContext) override;
   Expression shallowBeautify(ReductionContext * reductionContext) override;
-  LayoutShape leftLayoutShape() const override { return LayoutShape::OneLetter; } // TODO
+  /* A unit is displayed next to the value it multiplies, separated by a space
+   * (see MultiplicationNode::operatorSymbolBetween). */
+  LayoutShape leftLayoutShape() const override { return LayoutShape::Unit; }
 
   const Representative * representative() const { return m_representative; }
   const Prefix * prefix() const { return m_prefix; }
