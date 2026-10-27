@@ -1,6 +1,6 @@
 #!/bin/bash
 clear -x
-make cleanall
+make clean
 clear -x
 make THEME_NAME=gamma_dark OMEGA_USERNAME="Noctyris" -j4
 clear -x
