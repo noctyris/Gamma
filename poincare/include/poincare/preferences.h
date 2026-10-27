@@ -74,6 +74,8 @@ public:
   void setSymbolOfFunction(SymbolFunction symbolOfFunction) { m_symbolFunction = symbolOfFunction; }
   PythonFont pythonFont() const { return m_pythonFont; }
   void setPythonFont(PythonFont pythonFont) { m_pythonFont = pythonFont; }
+  bool unitsWithoutUnderscore() const { return m_unitsWithoutUnderscore; }
+  void setUnitsWithoutUnderscore(bool unitsWithoutUnderscore) { m_unitsWithoutUnderscore = unitsWithoutUnderscore; }
   const KDFont * KDPythonFont() const { return (m_pythonFont == PythonFont::Small) ? KDFont::SmallFont : KDFont::LargeFont; }
 private:
   AngleUnit m_angleUnit;
@@ -84,6 +86,7 @@ private:
   SymbolMultiplication m_symbolMultiplication;
   SymbolFunction m_symbolFunction;
   PythonFont m_pythonFont;
+  bool m_unitsWithoutUnderscore;
 };
 
 }

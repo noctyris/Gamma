@@ -26,6 +26,8 @@ public:
     m_tokenizer(text),
     m_currentToken(Token(Token::Undefined)),
     m_nextToken(m_tokenizer.popToken()),
+    m_previousTokenType(Token::Undefined),
+    m_identifiersAreFunctionParameters(false),
     m_pendingImplicitMultiplication(false),
     m_symbolPlusParenthesesAreFunctions(false) {}
 
@@ -78,6 +80,7 @@ private:
   void parseSpecialIdentifier(Expression & leftHandSide);
   void parseSequence(Expression & leftHandSide, const char * name, Token::Type leftDelimiter1, Token::Type rightDelimiter1, Token::Type leftDelimiter2, Token::Type rightDelimiter2);
   void parseCustomIdentifier(Expression & leftHandSide, const char * name, size_t length);
+  bool currentTokenCanBeParsedAsUnitWithoutUnderscore() const;
   void defaultParseLeftParenthesis(bool isSystemParenthesis, Expression & leftHandSide, Token::Type stoppingType);
 
   // Data members
@@ -89,6 +92,8 @@ private:
   Tokenizer m_tokenizer;
   Token m_currentToken;
   Token m_nextToken;
+  Token::Type m_previousTokenType;
+  bool m_identifiersAreFunctionParameters;
   bool m_pendingImplicitMultiplication;
   bool m_symbolPlusParenthesesAreFunctions;
 

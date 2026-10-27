@@ -23,7 +23,7 @@ extern const Shared::SettingsMessageTree s_modelFloatDisplayModeChildren[4];
 extern const Shared::SettingsMessageTree s_modelComplexFormatChildren[3];
 extern const Shared::SettingsMessageTree s_symbolChildren[4];
 extern const Shared::SettingsMessageTree s_symbolFunctionChildren[3];
-extern const Shared::SettingsMessageTree s_modelMathOptionsChildren[6];
+extern const Shared::SettingsMessageTree s_modelMathOptionsChildren[7];
 extern const Shared::SettingsMessageTree s_modelFontChildren[2];
 extern const Shared::SettingsMessageTree s_codeChildren[4];
 extern const Shared::SettingsMessageTree s_modelDateTimeChildren[3];

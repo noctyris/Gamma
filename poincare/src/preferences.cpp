@@ -15,7 +15,8 @@ Preferences::Preferences() :
   m_numberOfSignificantDigits(PrintFloat::k_numberOfPrintedSignificantDigits),
   m_symbolMultiplication(Preferences::SymbolMultiplication::Auto),
   m_symbolFunction(Preferences::SymbolFunction::Default),
-  m_pythonFont(Preferences::PythonFont::Large)
+  m_pythonFont(Preferences::PythonFont::Large),
+  m_unitsWithoutUnderscore(false)
 {}
 
 Preferences * Preferences::sharedPreferences() {

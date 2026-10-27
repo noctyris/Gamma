@@ -11,13 +11,20 @@ MathOptionsController::MathOptionsController(Responder * parentResponder, InputE
   m_preferencesController(this),
   m_displayModeController(this, inputEventHandlerDelegate)
 {
-  for (int i = 0; i < k_totalNumberOfCell; i++) {
+  for (int i = 0; i < k_numberOfSimpleChevronCells; i++) {
     m_cells[i].setMessageFont(KDFont::LargeFont);
   }
+  m_unitsWithoutUnderscoreCell.setMessageFont(KDFont::LargeFont);
 }
 
 bool MathOptionsController::handleEvent(Ion::Events::Event event) {
   if (event == Ion::Events::OK || event == Ion::Events::EXE || event == Ion::Events::Right) {
+    if (m_messageTreeModel->childAtIndex(selectedRow())->label() == I18n::Message::UnitsWithoutUnderscore) {
+      Preferences * preferences = Preferences::sharedPreferences();
+      preferences->setUnitsWithoutUnderscore(!preferences->unitsWithoutUnderscore());
+      m_selectableTableView.reloadCellAtLocation(m_selectableTableView.selectedColumn(), m_selectableTableView.selectedRow());
+      return true;
+    }
     GenericSubController * subController = nullptr;
     if (m_messageTreeModel->childAtIndex(selectedRow())->label() == I18n::Message::DisplayMode)
       subController = &m_displayModeController;
@@ -32,18 +39,39 @@ bool MathOptionsController::handleEvent(Ion::Events::Event event) {
   return GenericSubController::handleEvent(event);
 }
 
+int MathOptionsController::typeAtLocation(int i, int j) {
+  if (m_messageTreeModel->childAtIndex(j)->label() == I18n::Message::UnitsWithoutUnderscore) {
+    return k_unitsWithoutUnderscoreCellType;
+  }
+  return 0;
+}
+
 HighlightCell * MathOptionsController::reusableCell(int index, int type) {
+  if (type == k_unitsWithoutUnderscoreCellType) {
+    assert(index == 0);
+    return &m_unitsWithoutUnderscoreCell;
+  }
   assert(type == 0);
-  assert(index >= 0 && index < k_totalNumberOfCell);
+  assert(index >= 0 && index < k_numberOfSimpleChevronCells);
   return &m_cells[index];
 }
 
 int MathOptionsController::reusableCellCount(int type) {
+  if (type == k_unitsWithoutUnderscoreCellType) {
+    return 1;
+  }
   assert(type == 0);
-  return k_totalNumberOfCell;
+  return k_numberOfSimpleChevronCells;
 }
 
 void MathOptionsController::willDisplayCellForIndex(HighlightCell * cell, int index) {
+  if (m_messageTreeModel->childAtIndex(index)->label() == I18n::Message::UnitsWithoutUnderscore) {
+    GenericSubController::willDisplayCellForIndex(cell, index);
+    MessageTableCellWithSwitch * mySwitchCell = (MessageTableCellWithSwitch *)cell;
+    SwitchView * mySwitch = (SwitchView *)mySwitchCell->accessoryView();
+    mySwitch->setState(Preferences::sharedPreferences()->unitsWithoutUnderscore());
+    return;
+  }
   MessageTableCellWithChevronAndMessage * myTextCell = (MessageTableCellWithChevronAndMessage *)cell;
   Preferences * preferences = Preferences::sharedPreferences();
   I18n::Message thisLabel = m_messageTreeModel->childAtIndex(index)->label();

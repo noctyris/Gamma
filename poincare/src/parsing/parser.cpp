@@ -1,5 +1,6 @@
 #include "parser.h"
 #include <ion/unicode/utf8_decoder.h>
+#include <poincare/preferences.h>
 #include <utility>
 #include <algorithm>
 #include <stdlib.h>
@@ -97,6 +98,10 @@ Expression Parser::parseUntil(Token::Type stoppingType) {
 }
 
 void Parser::popToken() {
+  /* Keep track of the type of the token being consumed: it is used to decide
+   * whether an identifier is in an operand position (and may thus be a unit
+   * written without a leading underscore). */
+  m_previousTokenType = m_currentToken.type();
   if (m_pendingImplicitMultiplication) {
     m_currentToken = Token(Token::ImplicitTimes);
     m_pendingImplicitMultiplication = false;
@@ -493,7 +498,12 @@ void Parser::parseCustomIdentifier(Expression & leftHandSide, const char * name,
     }
     poppedParenthesisIsSystem = true;
   }
+  /* Parameters of a user-defined function are symbols: they do not denote the
+   * unit of the same name (f(t) and not f(tonne)). */
+  const bool identifiersWereFunctionParameters = m_identifiersAreFunctionParameters;
+  m_identifiersAreFunctionParameters = true;
   Expression parameter = parseCommaSeparatedList();
+  m_identifiersAreFunctionParameters = identifiersWereFunctionParameters;
   if (m_status != Status::Progress) {
     return;
   }
@@ -518,14 +528,53 @@ void Parser::parseCustomIdentifier(Expression & leftHandSide, const char * name,
 void Parser::parseIdentifier(Expression & leftHandSide, Token::Type stoppingType) {
   assert(leftHandSide.isUninitialized());
   const Expression::FunctionHelper * const * functionHelper = GetReservedFunction(m_currentToken.text(), m_currentToken.length());
-  if (functionHelper != nullptr) {
+  const bool isUnitWithoutUnderscore = currentTokenCanBeParsedAsUnitWithoutUnderscore();
+  /* A reserved function is only shadowed by a unit when it cannot be a function
+   * call, ie when it is not followed by a parenthesis. This way, a unit whose
+   * symbol is also a function name stays a function call when it is one. */
+  const bool isFunctionCall = m_nextToken.is(Token::LeftParenthesis) || m_nextToken.is(Token::LeftSystemParenthesis);
+  if (functionHelper != nullptr && !(isUnitWithoutUnderscore && !isFunctionCall)) {
     parseReservedFunction(leftHandSide, functionHelper);
   } else if (IsSpecialIdentifierName(m_currentToken.text(), m_currentToken.length())) {
     parseSpecialIdentifier(leftHandSide);
+  } else if (isUnitWithoutUnderscore) {
+    parseUnit(leftHandSide, stoppingType);
   } else {
     parseCustomIdentifier(leftHandSide, m_currentToken.text(), m_currentToken.length());
   }
   isThereImplicitMultiplication();
+}
+
+bool Parser::currentTokenCanBeParsedAsUnitWithoutUnderscore() const {
+  if (!Preferences::sharedPreferences()->unitsWithoutUnderscore() || m_identifiersAreFunctionParameters) {
+    return false;
+  }
+  /* Units written without a leading underscore are only recognized in an
+   * operand position: at the beginning of the expression, after a value, an
+   * opening parenthesis, a comma or a multiplication, division or power
+   * operator. Store targets (1→m) and the parameters of a user-defined
+   * function (1→f(t)=t^2) are thus left untouched. */
+  const bool isOperandPosition = m_previousTokenType == Token::Undefined ||
+                                 m_previousTokenType == Token::ImplicitTimes ||
+                                 m_previousTokenType == Token::Times ||
+                                 m_previousTokenType == Token::Slash ||
+                                 m_previousTokenType == Token::Caret ||
+                                 m_previousTokenType == Token::LeftParenthesis ||
+                                 m_previousTokenType == Token::LeftSystemParenthesis ||
+                                 m_previousTokenType == Token::LeftBracket ||
+                                 m_previousTokenType == Token::Comma;
+  if (!isOperandPosition) {
+    return false;
+  }
+  const Unit::Representative * representative = nullptr;
+  const Unit::Prefix * prefix = nullptr;
+  if (!Unit::CanParse(m_currentToken.text(), m_currentToken.length(), &representative, &prefix)) {
+    return false;
+  }
+  /* An existing variable or function takes precedence over the unit: a symbol
+   * named "m" is not shadowed by the meter unit. */
+  return m_context == nullptr ||
+         m_context->expressionTypeForIdentifier(m_currentToken.text(), m_currentToken.length()) == Context::SymbolAbstractType::None;
 }
 
 Expression Parser::parseFunctionParameters() {
