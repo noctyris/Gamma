@@ -365,6 +365,13 @@ QUIZ_CASE(poincare_parsing_units_without_underscore) {
   /* A product of units keeps the middle dot so that m·m is not read as mm. */
   assert_layout_serialize_to(parse_expression("m×m", nullptr, false).createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "m·m");
   assert_expression_serialize_to(oneMeter, "1×_m", DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits);
+  /* Juxtaposed units form a product: kgm is kg×m and not the symbol "kgm". */
+  assert_parsed_expression_is("kgm", Multiplication::Builder(kilogram, meter));
+  assert_layout_serialize_to(parse_expression("kgm", nullptr, false).createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "kg·m");
+  /* The longest unit is always preferred: ms is the millisecond, not m×s. */
+  assert_layout_serialize_to(parse_expression("ms", nullptr, false).createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "ms");
+  /* An identifier that cannot be split entirely into units stays a symbol. */
+  assert_parsed_expression_is("kgmz", Symbol::Builder("kgmz", 4));
 
   preferences->setUnitsWithoutUnderscore(previousUnitsWithoutUnderscore);
   // Serialization keeps the underscore so that the unit can be parsed back.

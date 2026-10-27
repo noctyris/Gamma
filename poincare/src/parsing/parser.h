@@ -53,6 +53,7 @@ private:
   void parseNumber(Expression & leftHandSide, Token::Type stoppingType = (Token::Type)0);
   void parseConstant(Expression & leftHandSide, Token::Type stoppingType = (Token::Type)0);
   void parseUnit(Expression & leftHandSide, Token::Type stoppingType = (Token::Type)0);
+  void parseUnitSequence(Expression & leftHandSide);
   void parseIdentifier(Expression & leftHandSide, Token::Type stoppingType = (Token::Type)0);
   void parseEmpty(Expression & leftHandSide, Token::Type stoppingType = (Token::Type)0);
   void parseMatrix(Expression & leftHandSide, Token::Type stoppingType = (Token::Type)0);
@@ -80,7 +81,7 @@ private:
   void parseSpecialIdentifier(Expression & leftHandSide);
   void parseSequence(Expression & leftHandSide, const char * name, Token::Type leftDelimiter1, Token::Type rightDelimiter1, Token::Type leftDelimiter2, Token::Type rightDelimiter2);
   void parseCustomIdentifier(Expression & leftHandSide, const char * name, size_t length);
-  bool currentTokenCanBeParsedAsUnitWithoutUnderscore() const;
+  bool currentTokenCanBeParsedAsUnitWithoutUnderscore(bool allowUnitSequence) const;
   void defaultParseLeftParenthesis(bool isSystemParenthesis, Expression & leftHandSide, Token::Type stoppingType);
 
   // Data members
