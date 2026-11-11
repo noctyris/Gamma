@@ -22,10 +22,55 @@ void GraphView::reload() {
   return FunctionGraphView::reload();
 }
 
+void GraphView::drawInequalityArea(KDContext * ctx, KDRect rect, ContinuousFunction * function) const {
+  ContinuousFunction::Inequality inequality = function->inequality();
+  if (inequality == ContinuousFunction::Inequality::None) {
+    return;
+  }
+  // Draw a light checkerboard pattern instead of a plain fill.
+  KDColor color = KDColor::blend(function->color(), KDColorWhite, 0x60);
+  for (KDCoordinate x = rect.left(); x <= rect.right(); x++) {
+    float xValue = pixelToFloat(Axis::Horizontal, x);
+    double yValue = function->evaluateXYAtParameter(xValue, context()).x2();
+    float yPixel = floatToPixel(Axis::Vertical, yValue);
+    if (!std::isfinite(yValue) || !std::isfinite(yPixel)) {
+      continue;
+    }
+    KDCoordinate y = (KDCoordinate)std::round(yPixel);
+    KDCoordinate start = rect.top();
+    KDCoordinate end = rect.bottom();
+    if (inequality == ContinuousFunction::Inequality::Inferior || inequality == ContinuousFunction::Inequality::InferiorEqual) {
+      // y < f(x): shade below the curve, ie at larger pixel ordinates.
+      start = std::max(start, y);
+    } else {
+      end = std::min(end, y);
+    }
+    for (KDCoordinate py = start; py <= end; py++) {
+      if (((x + py) & 1) == 0) {
+        ctx->fillRect(KDRect(x, py, 1, 1), color);
+      }
+    }
+  }
+}
+
 void GraphView::drawRect(KDContext * ctx, KDRect rect) const {
   FunctionGraphView::drawRect(ctx, rect);
   ContinuousFunctionStore * functionStore = App::app()->functionStore();
   const int activeFunctionsCount = functionStore->numberOfActiveFunctions();
+  /* Draw the inequalities first so that the curves stay visible above them. */
+  for (int i = 0; i < activeFunctionsCount; i++) {
+    Ion::Storage::Record record = functionStore->activeRecordAtIndex(i);
+    ExpiringPointer<ContinuousFunction> f = functionStore->modelForRecord(record);
+    if (!f->isInequality()) {
+      continue;
+    }
+    ContinuousFunctionCache * cch = functionStore->cacheAtIndex(i);
+    float tmin = f->tMin();
+    float rectLeft = pixelToFloat(Axis::Horizontal, rect.left() - k_externRectMargin);
+    float tCacheMin = std::isnan(rectLeft) ? tmin : std::max(tmin, rectLeft);
+    ContinuousFunctionCache::PrepareForCaching(f.operator->(), cch, tCacheMin, pixelWidth());
+    drawInequalityArea(ctx, rect, f.operator->());
+  }
   for (int i = 0; i < activeFunctionsCount ; i++) {
     Ion::Storage::Record record = functionStore->activeRecordAtIndex(i);
     ExpiringPointer<ContinuousFunction> f = functionStore->modelForRecord(record);

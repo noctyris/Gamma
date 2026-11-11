@@ -9,8 +9,28 @@ using namespace Shared;
 
 namespace Graph {
 
+namespace {
+
+const char * InequalityTitle(ContinuousFunction::Inequality inequality) {
+  switch (inequality) {
+  case ContinuousFunction::Inequality::Inferior:
+    return "y<";
+  case ContinuousFunction::Inequality::InferiorEqual:
+    return "y≤";
+  case ContinuousFunction::Inequality::Superior:
+    return "y>";
+  case ContinuousFunction::Inequality::SuperiorEqual:
+    return "y≥";
+  default:
+    assert(inequality == ContinuousFunction::Inequality::None);
+    return "y";
+  }
+}
+
+}
+
 ListController::ListController(Responder * parentResponder, ButtonRowController * header, ButtonRowController * footer, InputEventHandlerDelegate * inputEventHandlerDelegate) :
-  Shared::FunctionListController(parentResponder, header, footer, I18n::Message::AddFunction),
+  Shared::FunctionListController(parentResponder, header, footer, I18n::Message::AddElement),
   m_functionTitleCells{ //TODO find better initialization
     TextFieldFunctionTitleCell(this),
     TextFieldFunctionTitleCell(this),
@@ -19,6 +39,8 @@ ListController::ListController(Responder * parentResponder, ButtonRowController 
     TextFieldFunctionTitleCell(this),
   },
   m_expressionCells{},
+  m_modelsParameterController(this, this),
+  m_modelsStackController(nullptr, &m_modelsParameterController, Palette::BannerFirstVariantText, Palette::BannerFirstVariantBackground, Palette::BannerFirstVariantBorder),
   m_parameterController(this, this, I18n::Message::FunctionColor, I18n::Message::DeleteFunction, inputEventHandlerDelegate)
 {
   for (int i = 0; i < k_maxNumberOfDisplayableRows; i++) {
@@ -33,6 +55,12 @@ const char * ListController::title() {
 void ListController::renameSelectedFunction() {
   assert(selectedColumn() == 0);
   assert(selectedRow() >= 0 && selectedRow() < numberOfRows()-1); // TODO change if sometimes the addFunction row is not displayed
+
+  // An inequality is displayed as "y<..." and has no function name to edit.
+  ExpiringPointer<ContinuousFunction> function = modelStore()->modelForRecord(modelStore()->recordAtIndex(modelIndexForRow(selectedRow())));
+  if (function->isInequality()) {
+    return;
+  }
 
   // Increase the size of the name column
   computeTitlesColumnWidth(true);
@@ -184,9 +212,71 @@ void ListController::willDisplayExpressionCellAtIndex(HighlightCell * cell, int 
 
 void ListController::setFunctionNameInTextField(ExpiringPointer<ContinuousFunction> function, TextField * textField) {
   assert(textField != nullptr);
+  if (function->isInequality()) {
+    textField->setText(InequalityTitle(function->inequality()));
+    return;
+  }
   char bufferName[BufferTextView::k_maxNumberOfChar];
   function->nameWithArgument(bufferName, BufferTextView::k_maxNumberOfChar);
   textField->setText(bufferName);
+}
+
+void ListController::addEmptyModel() {
+  Container::activeApp()->displayModalViewController(&m_modelsStackController, 0.f, 0.f, Metric::CommonTopMargin, Metric::CommonRightMargin, 0, Metric::CommonLeftMargin);
+}
+
+void ListController::addModel(int modelIndex) {
+  ContinuousFunction::PlotType plotType = ContinuousFunction::PlotType::Cartesian;
+  ContinuousFunction::Inequality inequality = ContinuousFunction::Inequality::None;
+  const char * content = "";
+  switch (modelIndex) {
+  case 1:
+    content = "x";
+    break;
+  case 2:
+    plotType = ContinuousFunction::PlotType::Polar;
+    content = "cos(θ)";
+    break;
+  case 3:
+    plotType = ContinuousFunction::PlotType::Parametric;
+    content = "[[cos(t)][sin(t)]]";
+    break;
+  case 4:
+    inequality = ContinuousFunction::Inequality::Inferior;
+    content = "x";
+    break;
+  case 5:
+    inequality = ContinuousFunction::Inequality::InferiorEqual;
+    content = "x";
+    break;
+  case 6:
+    inequality = ContinuousFunction::Inequality::Superior;
+    content = "x";
+    break;
+  case 7:
+    inequality = ContinuousFunction::Inequality::SuperiorEqual;
+    content = "x";
+    break;
+  default:
+    assert(modelIndex == 0);
+  }
+
+  // The new model takes the place of the "add" row.
+  int newRow = selectedRow();
+  Ion::Storage::Record::ErrorStatus error = modelStore()->addEmptyModel();
+  if (error == Ion::Storage::Record::ErrorStatus::NotEnoughSpaceAvailable) {
+    return;
+  }
+  assert(error == Ion::Storage::Record::ErrorStatus::None);
+  selectableTableView()->selectCellAtLocation(1, newRow);
+  Ion::Storage::Record record = modelStore()->recordAtIndex(modelIndexForRow(newRow));
+  ExpiringPointer<ContinuousFunction> function = modelStore()->modelForRecord(record);
+  function->setPlotType(plotType, Poincare::Preferences::sharedPreferences()->angleUnit(), App::app()->localContext());
+  function->setInequality(inequality);
+  function->setContent(content, App::app()->localContext());
+  didChangeModelsList();
+  selectableTableView()->reloadData();
+  editExpression(Ion::Events::OK);
 }
 
 ContinuousFunctionStore * ListController::modelStore() {

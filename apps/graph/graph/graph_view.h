@@ -3,6 +3,8 @@
 
 #include "../../shared/function_graph_view.h"
 
+namespace Shared { class ContinuousFunction; }
+
 namespace Graph {
 
 class GraphView : public Shared::FunctionGraphView {
@@ -37,6 +39,7 @@ public:
    * of the graph where the area under the curve is colored. */
   void setAreaHighlightColor(bool highlightColor) override {};
 private:
+  void drawInequalityArea(KDContext * ctx, KDRect rect, Shared::ContinuousFunction * function) const;
   bool m_tangent;
 };
 

@@ -114,7 +114,17 @@ CodePoint ContinuousFunction::symbol() const {
 }
 
 ContinuousFunction::PlotType ContinuousFunction::plotType() const {
-  return recordData()->plotType();
+  return (PlotType)(static_cast<uint8_t>(recordData()->plotType()) & 0x0F);
+}
+
+ContinuousFunction::Inequality ContinuousFunction::inequality() const {
+  return (Inequality)(static_cast<uint8_t>(recordData()->plotType()) >> 4);
+}
+
+void ContinuousFunction::setInequality(Inequality inequality) {
+  recordData()->setInequality(inequality);
+  setCache(nullptr);
+  m_model.tidy();
 }
 
 void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences::AngleUnit angleUnit, Context * context) {
@@ -123,6 +133,9 @@ void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences
     return;
   }
 
+  /* Changing the curve type discards any inequality: the new curve has its own
+   * parameter, so an inequality on the old expression would be meaningless. */
+  recordData()->setInequality(Inequality::None);
   recordData()->setPlotType(newPlotType);
 
   setCache(nullptr);

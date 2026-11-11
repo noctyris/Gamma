@@ -3,6 +3,7 @@
 
 #include <escher.h>
 #include "list_parameter_controller.h"
+#include "function_models_parameter_controller.h"
 #include "text_field_function_title_cell.h"
 #include "../continuous_function_store.h"
 #include <apps/shared/function_expression_cell.h>
@@ -16,6 +17,7 @@ public:
   ListController(Responder * parentResponder, ButtonRowController * header, ButtonRowController * footer, InputEventHandlerDelegate * inputEventHandlerDelegate);
   const char * title() override;
   void renameSelectedFunction();
+  void addModel(int modelIndex);
   // TextFieldDelegate
   bool textFieldDidFinishEditing(TextField * textField, const char * text, Ion::Events::Event event) override;
   bool textFieldDidAbortEditing(TextField * textField) override;
@@ -31,10 +33,13 @@ private:
   HighlightCell * expressionCells(int index) override;
   void willDisplayTitleCellAtIndex(HighlightCell * cell, int j) override;
   void willDisplayExpressionCellAtIndex(HighlightCell * cell, int j) override;
+  void addEmptyModel() override;
   void setFunctionNameInTextField(Shared::ExpiringPointer<Shared::ContinuousFunction> function, TextField * textField);
   ContinuousFunctionStore * modelStore() override;
   TextFieldFunctionTitleCell m_functionTitleCells[k_maxNumberOfDisplayableRows];
   Shared::FunctionExpressionCell m_expressionCells[k_maxNumberOfDisplayableRows];
+  FunctionModelsParameterController m_modelsParameterController;
+  StackViewController m_modelsStackController;
   ListParameterController m_parameterController;
 };
 

@@ -39,8 +39,21 @@ public:
     Polar = 1,
     Parametric = 2
   };
+  /* The kind of inequality is stored in the unused high bits of the plot type
+   * byte. This keeps the record layout unchanged, so functions stored by an
+   * older firmware are still read correctly (their high bits are zero). */
+  enum class Inequality : uint8_t {
+    None = 0,
+    Inferior = 1,
+    InferiorEqual = 2,
+    Superior = 3,
+    SuperiorEqual = 4
+  };
   PlotType plotType() const;
   void setPlotType(PlotType plotType, Poincare::Preferences::AngleUnit angleUnit, Poincare::Context * context);
+  Inequality inequality() const;
+  void setInequality(Inequality inequality);
+  bool isInequality() const { return inequality() != Inequality::None; }
   static I18n::Message ParameterMessageForPlotType(PlotType plotType);
 
   // Evaluation
@@ -108,6 +121,9 @@ private:
     {}
     PlotType plotType() const { return m_plotType; }
     void setPlotType(PlotType plotType) { m_plotType = plotType; }
+    void setInequality(Inequality inequality) {
+      m_plotType = (PlotType)((static_cast<uint8_t>(m_plotType) & 0x0F) | (static_cast<uint8_t>(inequality) << 4));
+    }
     bool displayDerivative() const { return m_displayDerivative; }
     void setDisplayDerivative(bool display) { m_displayDerivative = display; }
     float tMin() const { return m_domain.min(); }
