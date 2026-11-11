@@ -26,10 +26,20 @@ public:
   int typeAtLocation(int i, int j) override;
 
 private:
-  constexpr static int k_numberOfModels = 8;
+  constexpr static int k_numberOfModels = 12;
   constexpr static int k_numberOfExpressionCells = k_numberOfModels - 1;
   static constexpr const char * k_modelDescriptions[k_numberOfExpressionCells] = {
-    "f(x)=x", "r=f(θ)", "[[x][y]]=f(t)", "y<f(x)", "y≤f(x)", "y>f(x)", "y≥f(x)"
+    "f(x)=x",
+    "x+y+1=0",
+    "x+y≤0",
+    "x=√(y)",
+    "x^2+y^2+x*y+x+y=0",
+    "r=f(θ)",
+    "[[x][y]]=f(t)",
+    "y<f(x)",
+    "y≤f(x)",
+    "y>f(x)",
+    "y≥f(x)"
   };
   MessageTableCell<> m_emptyModelCell;
   ExpressionTableCell m_modelCells[k_numberOfExpressionCells];

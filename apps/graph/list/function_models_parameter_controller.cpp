@@ -1,12 +1,32 @@
 #include "function_models_parameter_controller.h"
 #include "list_controller.h"
+#include <poincare/expression.h>
 #include <poincare/layout_helper.h>
+#include <poincare/preferences.h>
 #include <apps/i18n.h>
 #include <assert.h>
+#include <string.h>
 
 using namespace Poincare;
 
 namespace Graph {
+
+namespace {
+
+Poincare::Layout ModelLayout(const char * text) {
+  /* The inequality templates cannot be parsed as plain expressions. The other
+   * templates are parsed to get proper exponents and square roots. */
+  if (strstr(text, "<") == nullptr && strstr(text, ">") == nullptr &&
+      strstr(text, "≤") == nullptr && strstr(text, "≥") == nullptr) {
+    Poincare::Expression expression = Poincare::Expression::Parse(text, nullptr);
+    if (!expression.isUninitialized()) {
+      return expression.createLayout(Poincare::Preferences::PrintFloatMode::Decimal, 1);
+    }
+  }
+  return Poincare::LayoutHelper::String(text, strlen(text));
+}
+
+}
 
 constexpr const char * FunctionModelsParameterController::k_modelDescriptions[k_numberOfExpressionCells];
 
@@ -20,7 +40,7 @@ FunctionModelsParameterController::FunctionModelsParameterController(Responder *
   m_selectableTableView.setMargins(0);
   m_selectableTableView.setDecoratorType(ScrollView::Decorator::Type::None);
   for (int i = 0; i < k_numberOfExpressionCells; i++) {
-    Layout layout = LayoutHelper::String(k_modelDescriptions[i], strlen(k_modelDescriptions[i]));
+    Layout layout = ModelLayout(k_modelDescriptions[i]);
     m_modelCells[i].setLayout(layout);
     m_modelCells[i].setParentResponder(&m_selectableTableView);
   }

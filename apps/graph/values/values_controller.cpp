@@ -166,6 +166,9 @@ void ValuesController::updateNumberOfColumns() const {
   for (int i = 0; i < functionStore()->numberOfActiveFunctions(); i++) {
     Ion::Storage::Record record = functionStore()->activeRecordAtIndex(i);
     ExpiringPointer<ContinuousFunction> f = functionStore()->modelForRecord(record);
+    if (f->isImplicit()) {
+      continue;
+    }
     int plotTypeIndex = static_cast<int>(f->plotType());
     m_numberOfValuesColumnsForType[plotTypeIndex] += numberOfColumnsForRecord(record);
   }
@@ -213,6 +216,9 @@ int ValuesController::numberOfColumnsForAbscissaColumn(int column) {
 
 int ValuesController::numberOfColumnsForRecord(Ion::Storage::Record record) const {
   ExpiringPointer<ContinuousFunction> f = functionStore()->modelForRecord(record);
+  if (f->isImplicit()) {
+    return 0;
+  }
   ContinuousFunction::PlotType plotType = f->plotType();
   return 1 +
     (plotType == ContinuousFunction::PlotType::Cartesian && f->displayDerivative());

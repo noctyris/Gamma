@@ -33,11 +33,15 @@ public:
   CodePoint symbol() const override;
   Poincare::Expression expressionReduced(Poincare::Context * context) const override;
 
+  /* Implicit is deliberately excluded from k_numberOfPlotTypes: it has no
+   * entry in the curve type menu, no values table and no domain. It still
+   * uses a free value in the low nibble of the stored plot type. */
   static constexpr int k_numberOfPlotTypes = 3;
   enum class PlotType : uint8_t {
     Cartesian = 0,
     Polar = 1,
-    Parametric = 2
+    Parametric = 2,
+    Implicit = 3
   };
   /* The kind of inequality is stored in the unused high bits of the plot type
    * byte. This keeps the record layout unchanged, so functions stored by an
@@ -54,6 +58,10 @@ public:
   Inequality inequality() const;
   void setInequality(Inequality inequality);
   bool isInequality() const { return inequality() != Inequality::None; }
+  bool isImplicit() const { return plotType() == PlotType::Implicit; }
+  /* Evaluate the left member of an implicit equation, or the expression of
+   * an implicit inequality. The expression may contain both x and y. */
+  double evaluateImplicitAt(double x, double y, Poincare::Context * context) const;
   static I18n::Message ParameterMessageForPlotType(PlotType plotType);
 
   // Evaluation

@@ -49,6 +49,12 @@ void DomainParameterController::willDisplayCellForIndex(HighlightCell * cell, in
       myCell->setMessage(labels[index]);
       break;
     }
+    case Shared::ContinuousFunction::PlotType::Implicit:
+    {
+      I18n::Message labels[k_totalNumberOfCell] = {I18n::Message::XMin, I18n::Message::XMax};
+      myCell->setMessage(labels[index]);
+      break;
+    }
     default:
     {
       assert(plotType == Shared::ContinuousFunction::PlotType::Polar);
@@ -126,7 +132,7 @@ Shared::ExpiringPointer<Shared::ContinuousFunction> DomainParameterController::f
 
 FloatParameterController<float>::InfinityTolerance DomainParameterController::infinityAllowanceForRow(int row) const {
   Shared::ContinuousFunction::PlotType plotType = function()->plotType();
-  if (plotType == Shared::ContinuousFunction::PlotType::Cartesian) {
+  if (plotType == Shared::ContinuousFunction::PlotType::Cartesian || plotType == Shared::ContinuousFunction::PlotType::Implicit) {
     return row == 0 ? FloatParameterController<float>::InfinityTolerance::MinusInfinity : FloatParameterController<float>::InfinityTolerance::PlusInfinity;
   }
   return FloatParameterController<float>::InfinityTolerance::None;

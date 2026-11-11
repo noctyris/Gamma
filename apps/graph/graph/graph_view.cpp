@@ -2,10 +2,45 @@
 #include "../app.h"
 #include <assert.h>
 #include <algorithm>
+#include <cmath>
 
 using namespace Shared;
 
 namespace Graph {
+
+namespace {
+
+bool IsInImplicitRegion(double value, Shared::ContinuousFunction::Inequality inequality) {
+  switch (inequality) {
+  case Shared::ContinuousFunction::Inequality::Inferior:
+    return value < 0.0;
+  case Shared::ContinuousFunction::Inequality::InferiorEqual:
+    return value <= 0.0;
+  case Shared::ContinuousFunction::Inequality::Superior:
+    return value > 0.0;
+  case Shared::ContinuousFunction::Inequality::SuperiorEqual:
+    return value >= 0.0;
+  default:
+    return false;
+  }
+}
+
+void DrawPixelSegment(KDContext * ctx, KDRect rect, float x1, float y1, float x2, float y2, KDColor color, bool dotted) {
+  const int steps = (int)std::max(std::abs(x2 - x1), std::abs(y2 - y1));
+  if (steps <= 0) {
+    return;
+  }
+  const int increment = dotted ? 2 : 1;
+  for (int i = 0; i <= steps; i += increment) {
+    const KDCoordinate x = (KDCoordinate)std::round(x1 + (x2 - x1) * i / steps);
+    const KDCoordinate y = (KDCoordinate)std::round(y1 + (y2 - y1) * i / steps);
+    if (x >= rect.left() && x <= rect.right() && y >= rect.top() && y <= rect.bottom()) {
+      ctx->fillRect(KDRect(x, y, 1, 1), color);
+    }
+  }
+}
+
+}
 
 GraphView::GraphView(InteractiveCurveViewRange * graphRange,
   CurveViewCursor * cursor, Shared::BannerView * bannerView, CursorView * cursorView) :
@@ -46,8 +81,65 @@ void GraphView::drawInequalityArea(KDContext * ctx, KDRect rect, ContinuousFunct
       end = std::min(end, y);
     }
     for (KDCoordinate py = start; py <= end; py++) {
-      if (((x + py) & 1) == 0) {
+      /* Keep the fill light, like the latest Epsilon pattern. */
+      if (((x + 2 * py) & 7) == 0) {
         ctx->fillRect(KDRect(x, py, 1, 1), color);
+      }
+    }
+  }
+}
+
+void GraphView::drawImplicit(KDContext * ctx, KDRect rect, ContinuousFunction * function) const {
+  constexpr KDCoordinate step = 3;
+  const ContinuousFunction::Inequality inequality = function->inequality();
+  const bool strict = inequality == ContinuousFunction::Inequality::Inferior || inequality == ContinuousFunction::Inequality::Superior;
+  const KDColor areaColor = KDColor::blend(function->color(), KDColorWhite, 0x60);
+  const KDColor boundaryColor = function->color();
+
+  for (KDCoordinate x = rect.left(); x + step <= rect.right(); x += step) {
+    const float x0 = pixelToFloat(Axis::Horizontal, x);
+    const float x1 = pixelToFloat(Axis::Horizontal, x + step);
+    for (KDCoordinate y = rect.top(); y + step <= rect.bottom(); y += step) {
+      const float yTop = pixelToFloat(Axis::Vertical, y);
+      const float yBottom = pixelToFloat(Axis::Vertical, y + step);
+      const double fTL = function->evaluateImplicitAt(x0, yTop, context());
+      const double fTR = function->evaluateImplicitAt(x1, yTop, context());
+      const double fBR = function->evaluateImplicitAt(x1, yBottom, context());
+      const double fBL = function->evaluateImplicitAt(x0, yBottom, context());
+      if (!std::isfinite(fTL) || !std::isfinite(fTR) || !std::isfinite(fBR) || !std::isfinite(fBL)) {
+        continue;
+      }
+
+      if (inequality != ContinuousFunction::Inequality::None) {
+        const double center = (fTL + fTR + fBR + fBL) * 0.25;
+        if (IsInImplicitRegion(center, inequality)) {
+          ctx->fillRect(KDRect(x + step / 2, y + step / 2, 1, 1), areaColor);
+        }
+      }
+
+      struct Crossing { float x; float y; };
+      Crossing crossings[4];
+      int numberOfCrossings = 0;
+      auto addCrossing = [&](double a, double b, float ax, float ay, float bx, float by) {
+        if ((a > 0.0) == (b > 0.0) || a == b || numberOfCrossings >= 4) {
+          return;
+        }
+        const float t = (float)(a / (a - b));
+        crossings[numberOfCrossings++] = {ax + (bx - ax) * t, ay + (by - ay) * t};
+      };
+      addCrossing(fTL, fTR, x, y, x + step, y);
+      addCrossing(fTR, fBR, x + step, y, x + step, y + step);
+      addCrossing(fBR, fBL, x + step, y + step, x, y + step);
+      addCrossing(fBL, fTL, x, y + step, x, y);
+
+      auto drawBoundary = [&](const Crossing & a, const Crossing & b) {
+        DrawPixelSegment(ctx, rect, a.x, a.y, b.x, b.y, boundaryColor, strict);
+      };
+      if (numberOfCrossings == 2) {
+        drawBoundary(crossings[0], crossings[1]);
+      } else if (numberOfCrossings == 4) {
+        drawBoundary(crossings[0], crossings[1]);
+        drawBoundary(crossings[2], crossings[3]);
       }
     }
   }
@@ -57,11 +149,19 @@ void GraphView::drawRect(KDContext * ctx, KDRect rect) const {
   FunctionGraphView::drawRect(ctx, rect);
   ContinuousFunctionStore * functionStore = App::app()->functionStore();
   const int activeFunctionsCount = functionStore->numberOfActiveFunctions();
+  /* Draw the implicit curves first so that the explicit curves stay visible. */
+  for (int i = 0; i < activeFunctionsCount; i++) {
+    Ion::Storage::Record record = functionStore->activeRecordAtIndex(i);
+    ExpiringPointer<ContinuousFunction> f = functionStore->modelForRecord(record);
+    if (f->isImplicit()) {
+      drawImplicit(ctx, rect, f.operator->());
+    }
+  }
   /* Draw the inequalities first so that the curves stay visible above them. */
   for (int i = 0; i < activeFunctionsCount; i++) {
     Ion::Storage::Record record = functionStore->activeRecordAtIndex(i);
     ExpiringPointer<ContinuousFunction> f = functionStore->modelForRecord(record);
-    if (!f->isInequality()) {
+    if (f->isImplicit() || !f->isInequality()) {
       continue;
     }
     ContinuousFunctionCache * cch = functionStore->cacheAtIndex(i);
@@ -74,6 +174,9 @@ void GraphView::drawRect(KDContext * ctx, KDRect rect) const {
   for (int i = 0; i < activeFunctionsCount ; i++) {
     Ion::Storage::Record record = functionStore->activeRecordAtIndex(i);
     ExpiringPointer<ContinuousFunction> f = functionStore->modelForRecord(record);
+    if (f->isImplicit()) {
+      continue;
+    }
     ContinuousFunctionCache * cch = functionStore->cacheAtIndex(i);
     Shared::ContinuousFunction::PlotType type = f->plotType();
     Poincare::Expression e = f->expressionReduced(context());

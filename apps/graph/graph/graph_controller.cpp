@@ -59,6 +59,9 @@ void GraphController::reloadBannerView() {
 
 bool GraphController::moveCursorHorizontally(int direction, int scrollSpeed) {
   Ion::Storage::Record record = functionStore()->activeRecordAtIndex(indexFunctionSelectedByCursor());
+  if (functionStore()->modelForRecord(record)->isImplicit()) {
+    return false;
+  }
   return privateMoveCursorHorizontally(m_cursor, direction, m_graphRange, k_numberOfCursorStepsInGradUnit, record, scrollSpeed);
 }
 
@@ -73,6 +76,9 @@ int GraphController::nextCurveIndexVertically(bool goingUp, int currentSelectedC
 
 double GraphController::defaultCursorT(Ion::Storage::Record record) {
   ExpiringPointer<ContinuousFunction> function = functionStore()->modelForRecord(record);
+  if (function->isImplicit()) {
+    return 0.0;
+  }
   if (function->plotType() == ContinuousFunction::PlotType::Cartesian) {
     return FunctionGraphController::defaultCursorT(record);
   }

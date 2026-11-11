@@ -27,6 +27,22 @@ const char * InequalityTitle(ContinuousFunction::Inequality inequality) {
   }
 }
 
+const char * ImplicitInequalityTitle(ContinuousFunction::Inequality inequality) {
+  switch (inequality) {
+  case ContinuousFunction::Inequality::Inferior:
+    return "<0";
+  case ContinuousFunction::Inequality::InferiorEqual:
+    return "≤0";
+  case ContinuousFunction::Inequality::Superior:
+    return ">0";
+  case ContinuousFunction::Inequality::SuperiorEqual:
+    return "≥0";
+  default:
+    assert(inequality == ContinuousFunction::Inequality::None);
+    return "";
+  }
+}
+
 }
 
 ListController::ListController(Responder * parentResponder, ButtonRowController * header, ButtonRowController * footer, InputEventHandlerDelegate * inputEventHandlerDelegate) :
@@ -56,9 +72,9 @@ void ListController::renameSelectedFunction() {
   assert(selectedColumn() == 0);
   assert(selectedRow() >= 0 && selectedRow() < numberOfRows()-1); // TODO change if sometimes the addFunction row is not displayed
 
-  // An inequality is displayed as "y<..." and has no function name to edit.
+  // Inequalities and implicit models have no function name to edit.
   ExpiringPointer<ContinuousFunction> function = modelStore()->modelForRecord(modelStore()->recordAtIndex(modelIndexForRow(selectedRow())));
-  if (function->isInequality()) {
+  if (function->isInequality() || function->isImplicit()) {
     return;
   }
 
@@ -212,6 +228,10 @@ void ListController::willDisplayExpressionCellAtIndex(HighlightCell * cell, int 
 
 void ListController::setFunctionNameInTextField(ExpiringPointer<ContinuousFunction> function, TextField * textField) {
   assert(textField != nullptr);
+  if (function->isImplicit()) {
+    textField->setText(function->inequality() == ContinuousFunction::Inequality::None ? "" : ImplicitInequalityTitle(function->inequality()));
+    return;
+  }
   if (function->isInequality()) {
     textField->setText(InequalityTitle(function->inequality()));
     return;
@@ -234,26 +254,43 @@ void ListController::addModel(int modelIndex) {
     content = "x";
     break;
   case 2:
+    plotType = ContinuousFunction::PlotType::Implicit;
+    content = "x+y+1=0";
+    break;
+  case 3:
+    plotType = ContinuousFunction::PlotType::Implicit;
+    inequality = ContinuousFunction::Inequality::InferiorEqual;
+    content = "x+y";
+    break;
+  case 4:
+    plotType = ContinuousFunction::PlotType::Implicit;
+    content = "x=√(y)";
+    break;
+  case 5:
+    plotType = ContinuousFunction::PlotType::Implicit;
+    content = "x^2+y^2+x*y+x+y=0";
+    break;
+  case 6:
     plotType = ContinuousFunction::PlotType::Polar;
     content = "cos(θ)";
     break;
-  case 3:
+  case 7:
     plotType = ContinuousFunction::PlotType::Parametric;
     content = "[[cos(t)][sin(t)]]";
     break;
-  case 4:
+  case 8:
     inequality = ContinuousFunction::Inequality::Inferior;
     content = "x";
     break;
-  case 5:
+  case 9:
     inequality = ContinuousFunction::Inequality::InferiorEqual;
     content = "x";
     break;
-  case 6:
+  case 10:
     inequality = ContinuousFunction::Inequality::Superior;
     content = "x";
     break;
-  case 7:
+  case 11:
     inequality = ContinuousFunction::Inequality::SuperiorEqual;
     content = "x";
     break;

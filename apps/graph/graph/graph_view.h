@@ -40,6 +40,7 @@ public:
   void setAreaHighlightColor(bool highlightColor) override {};
 private:
   void drawInequalityArea(KDContext * ctx, KDRect rect, Shared::ContinuousFunction * function) const;
+  void drawImplicit(KDContext * ctx, KDRect rect, Shared::ContinuousFunction * function) const;
   bool m_tangent;
 };
 

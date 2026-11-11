@@ -2,6 +2,7 @@
 #include "poincare_helpers.h"
 #include <apps/constant.h>
 #include <poincare/derivative.h>
+#include <poincare/float.h>
 #include <poincare/integral.h>
 #include <poincare/matrix.h>
 #include <poincare/multiplication.h>
@@ -107,6 +108,8 @@ CodePoint ContinuousFunction::symbol() const {
     return 'x';
   case PlotType::Polar:
     return UCodePointGreekSmallLetterTheta;
+  case PlotType::Implicit:
+    return 'x';
   default:
     assert(plotType() == PlotType::Parametric);
     return 't';
@@ -130,6 +133,20 @@ void ContinuousFunction::setInequality(Inequality inequality) {
 void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences::AngleUnit angleUnit, Context * context) {
   PlotType currentPlotType = plotType();
   if (newPlotType == currentPlotType) {
+    return;
+  }
+  if (currentPlotType == PlotType::Implicit) {
+    /* An implicit model has no parameter to convert to another curve type.
+     * The UI must not offer this conversion. */
+    return;
+  }
+  if (newPlotType == PlotType::Implicit) {
+    recordData()->setInequality(Inequality::None);
+    recordData()->setPlotType(newPlotType);
+    setCache(nullptr);
+    m_model.tidy();
+    setTMin(-INFINITY);
+    setTMax(INFINITY);
     return;
   }
 
@@ -193,6 +210,9 @@ I18n::Message ContinuousFunction::ParameterMessageForPlotType(PlotType plotType)
   if (plotType == PlotType::Polar) {
     return I18n::Message::Theta;
   }
+  if (plotType == PlotType::Implicit) {
+    return I18n::Message::X;
+  }
   assert(plotType == PlotType::Parametric);
   return I18n::Message::T;
 }
@@ -201,7 +221,7 @@ template <typename T>
 Poincare::Coordinate2D<T> ContinuousFunction::privateEvaluateXYAtParameter(T t, Poincare::Context * context) const {
   Coordinate2D<T> x1x2 = templatedApproximateAtParameter(t, context);
   PlotType type = plotType();
-  if (type == PlotType::Cartesian || type == PlotType::Parametric) {
+  if (type == PlotType::Cartesian || type == PlotType::Parametric || type == PlotType::Implicit) {
     return x1x2;
   }
   assert(type == PlotType::Polar);
@@ -275,6 +295,15 @@ void ContinuousFunction::setTMax(float tMax) {
 }
 
 void ContinuousFunction::rangeForDisplay(float * xMin, float * xMax, float * yMin, float * yMax, float targetRatio, Poincare::Context * context) const {
+  if (plotType() == PlotType::Implicit) {
+    /* Implicit curves are evaluated on a grid, so their extent cannot be
+     * derived from a parameter range. Use a sensible default window. */
+    *xMin = -10.0f;
+    *xMax = 10.0f;
+    *yMin = -10.0f;
+    *yMax = 10.0f;
+    return;
+  }
   if (plotType() != PlotType::Cartesian) {
     assert(std::isfinite(tMin()) && std::isfinite(tMax()) && std::isfinite(rangeStep()) && rangeStep() > 0);
     protectedFullRangeForDisplay(tMin(), tMax(), rangeStep(), xMin, xMax, context, true);
@@ -359,6 +388,11 @@ Coordinate2D<T> ContinuousFunction::templatedApproximateAtParameter(T t, Poincar
   char unknown[bufferSize];
   Poincare::SerializationHelper::CodePoint(unknown, bufferSize, UCodePointUnknown);
   PlotType type = plotType();
+  if (type == PlotType::Implicit) {
+    /* An implicit curve is evaluated on a two-dimensional grid by
+     * evaluateImplicitAt, not with a single parameter. */
+    return Coordinate2D<T>(t, NAN);
+  }
   Expression e = expressionReduced(context);
   if (type != PlotType::Parametric) {
     assert(type == PlotType::Cartesian || type == PlotType::Polar);
@@ -426,8 +460,34 @@ Poincare::Expression ContinuousFunction::sumBetweenBounds(double start, double e
    * the derivative table. */
 }
 
+double ContinuousFunction::evaluateImplicitAt(double x, double y, Poincare::Context * context) const {
+  /* Work on a clone: replaceSymbolWithExpression mutates the tree in place and
+   * expressionReduced returns a cached handle. Mutating the cache would turn
+   * the implicit equation into a constant after the first evaluation. */
+  Expression e = expressionClone();
+  if (e.isUninitialized()) {
+    return NAN;
+  }
+  /* The model stores either the full equation (x^2+y^2=1) or a single
+   * expression to compare to zero (x+y for x+y<=0). */
+  auto approximateSide = [context, x, y](Expression side) -> double {
+    side = side.replaceSymbolWithExpression(Symbol::Builder('x'), Float<double>::Builder(x));
+    side = side.replaceSymbolWithExpression(Symbol::Builder('y'), Float<double>::Builder(y));
+    return PoincareHelpers::ApproximateToScalar<double>(side, context);
+  };
+  if (e.type() == ExpressionNode::Type::Equal) {
+    return approximateSide(e.childAtIndex(0)) - approximateSide(e.childAtIndex(1));
+  }
+  return approximateSide(e);
+}
+
 Ion::Storage::Record::ErrorStatus ContinuousFunction::setContent(const char * c, Poincare::Context * context) {
   setCache(nullptr);
+  if (isImplicit()) {
+    /* Do not replace x by the model's unknown symbol: an implicit expression
+     * keeps both x and y free. */
+    return editableModel()->setContent(this, c, context, 0);
+  }
   return ExpressionModelHandle::setContent(c, context);
 }
 
