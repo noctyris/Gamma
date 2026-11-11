@@ -145,6 +145,17 @@ void GraphView::drawImplicit(KDContext * ctx, KDRect rect, ContinuousFunction * 
   }
 }
 
+void GraphView::drawScatterPlot(KDContext * ctx, KDRect rect, ContinuousFunction * function) const {
+  int numberOfPoints = function->numberOfPoints();
+  for (int i = 0; i < numberOfPoints; i++) {
+    Poincare::Coordinate2D<double> point;
+    if (!function->pointAtIndex(i, &point, context())) {
+      continue;
+    }
+    drawDot(ctx, rect, point.x1(), point.x2(), function->color(), Size::Small);
+  }
+}
+
 void GraphView::drawRect(KDContext * ctx, KDRect rect) const {
   FunctionGraphView::drawRect(ctx, rect);
   ContinuousFunctionStore * functionStore = App::app()->functionStore();
@@ -174,17 +185,19 @@ void GraphView::drawRect(KDContext * ctx, KDRect rect) const {
   for (int i = 0; i < activeFunctionsCount ; i++) {
     Ion::Storage::Record record = functionStore->activeRecordAtIndex(i);
     ExpiringPointer<ContinuousFunction> f = functionStore->modelForRecord(record);
-    if (f->isImplicit()) {
+    if (f->isImplicit() || f->isScatter()) {
       continue;
     }
     ContinuousFunctionCache * cch = functionStore->cacheAtIndex(i);
     Shared::ContinuousFunction::PlotType type = f->plotType();
-    Poincare::Expression e = f->expressionReduced(context());
-    if (e.isUndefined() || (
-        type == Shared::ContinuousFunction::PlotType::Parametric &&
-        e.childAtIndex(0).isUndefined() &&
-        e.childAtIndex(1).isUndefined())) {
-      continue;
+    if (!f->isPiecewise()) {
+      Poincare::Expression e = f->expressionReduced(context());
+      if (e.isUndefined() || (
+          type == Shared::ContinuousFunction::PlotType::Parametric &&
+          e.childAtIndex(0).isUndefined() &&
+          e.childAtIndex(1).isUndefined())) {
+        continue;
+      }
     }
     float tmin = f->tMin();
     float tmax = f->tMax();
@@ -217,7 +230,7 @@ void GraphView::drawRect(KDContext * ctx, KDRect rect) const {
             return f->evaluateXYAtParameter(t, c);
           });
       /* Draw tangent */
-      if (m_tangent && record == m_selectedRecord) {
+      if (m_tangent && !f->isPiecewise() && record == m_selectedRecord) {
         float tangentParameterA = f->approximateDerivative(m_curveViewCursor->x(), context());
         float tangentParameterB = -tangentParameterA*m_curveViewCursor->x()+f->evaluateXYAtParameter(m_curveViewCursor->x(), context()).x2();
         // To represent the tangent, we draw segment from and to abscissas at the extremity of the drawn rect
@@ -240,6 +253,15 @@ void GraphView::drawRect(KDContext * ctx, KDRect rect) const {
           Poincare::Context * c = (Poincare::Context *)context;
           return f->evaluateXYAtParameter(t, c);
         }, f.operator->(), context(), false, f->color());
+    }
+  }
+  /* Scatter plots are drawn last so that their points stay visible above the
+   * curves. */
+  for (int i = 0; i < activeFunctionsCount; i++) {
+    Ion::Storage::Record record = functionStore->activeRecordAtIndex(i);
+    ExpiringPointer<ContinuousFunction> f = functionStore->modelForRecord(record);
+    if (f->isScatter()) {
+      drawScatterPlot(ctx, rect, f.operator->());
     }
   }
 }

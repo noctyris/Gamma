@@ -27,7 +27,7 @@ public:
   int typeAtLocation(int i, int j) override;
 
 private:
-  constexpr static int k_numberOfModels = 12;
+  constexpr static int k_numberOfModels = 15;
   constexpr static int k_numberOfExpressionCells = k_numberOfModels - 1;
   constexpr static int k_numberOfReusableCells = 5;
   static constexpr const char * k_modelDescriptions[k_numberOfExpressionCells] = {
@@ -35,9 +35,12 @@ private:
     "x+y+1=0",
     "x+y≤0",
     "x=√(y)",
+    "f(x)={-x,x<0 \\\\ x,x≥0}",
+    "(2,3)",
+    "{(2,3),(3,5)}",
     "x^2+y^2+x*y+x+y=0",
-    "r=f(θ)",
-    "[[x][y]]=f(t)",
+    "f(t)=(cos(t),sin(t))",
+    "r1(θ)=cos(θ)",
     "y<f(x)",
     "y≤f(x)",
     "y>f(x)",

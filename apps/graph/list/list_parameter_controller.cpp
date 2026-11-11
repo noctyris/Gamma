@@ -79,7 +79,7 @@ void ListParameterController::willDisplayCellForIndex(HighlightCell * cell, int 
     Shared::ExpiringPointer<Shared::ContinuousFunction> function = myApp->functionStore()->modelForRecord(m_record);
     if (cell == &m_typeCell) {
       m_typeCell.setMessage(I18n::Message::CurveType);
-      if (function->isImplicit()) {
+      if (function->isImplicit() || function->isScatterPlot()) {
         m_typeCell.setSubtitle(I18n::Message::Default);
       } else {
         int row = static_cast<int>(function->plotType());
@@ -88,7 +88,7 @@ void ListParameterController::willDisplayCellForIndex(HighlightCell * cell, int 
     } else {
       assert(cell == &m_functionDomain);
       m_functionDomain.setMessage(I18n::Message::FunctionDomain);
-      if (function->isImplicit()) {
+      if (function->isImplicit() || function->isScatterPlot()) {
         m_functionDomain.setAccessoryText("—");
         return;
       }
@@ -108,9 +108,12 @@ void ListParameterController::willDisplayCellForIndex(HighlightCell * cell, int 
 
 bool ListParameterController::handleEnterOnRow(int rowIndex) {
   StackViewController * stack = (StackViewController *)(parentResponder());
-  if ((rowIndex == 0 || rowIndex == 1) && !m_record.isNull() &&
-      App::app()->functionStore()->modelForRecord(m_record)->isImplicit()) {
-    return false;
+  if ((rowIndex == 0 || rowIndex == 1) && !m_record.isNull()) {
+    Shared::ExpiringPointer<Shared::ContinuousFunction> function =
+        App::app()->functionStore()->modelForRecord(m_record);
+    if (function->isImplicit() || function->isScatterPlot()) {
+      return false;
+    }
   }
   switch (rowIndex) {
   case 0:

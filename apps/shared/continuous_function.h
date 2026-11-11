@@ -12,6 +12,7 @@
 #include "global_context.h"
 #include "continuous_function_cache.h"
 #include "function.h"
+#include "function_equation.h"
 #include "range_1D.h"
 #include <poincare/symbol.h>
 #include <poincare/coordinate_2D.h>
@@ -24,26 +25,34 @@ class ContinuousFunction : public Function {
   friend class ContinuousFunctionCache;
 public:
   static void DefaultName(char buffer[], size_t bufferSize);
+  static void DefaultPolarName(char buffer[], size_t bufferSize);
   static ContinuousFunction NewModel(Ion::Storage::Record::ErrorStatus * error, const char * baseName = nullptr);
   ContinuousFunction(Ion::Storage::Record record = Record()) :
     Function(record),
-    m_cache(nullptr)
+    m_cache(nullptr),
+    m_piecewise()
   {}
   I18n::Message parameterMessageName() const override;
   CodePoint symbol() const override;
   Poincare::Expression expressionReduced(Poincare::Context * context) const override;
+  Poincare::Expression expressionClone() const override;
+  void text(char * buffer, size_t bufferSize) const override;
+  Poincare::Layout layout() override;
+  void tidy() override;
 
-  /* Implicit is deliberately excluded from k_numberOfPlotTypes: it has no
-   * entry in the curve type menu, no values table and no domain. It still
-   * uses a free value in the low nibble of the stored plot type. */
+  /* Implicit, Piecewise and Scatter are deliberately excluded from
+   * k_numberOfPlotTypes: they have no entry in the curve type menu and no
+   * values interval. They still use a free value in the low nibble of the
+   * stored plot type. */
   static constexpr int k_numberOfPlotTypes = 3;
   enum class PlotType : uint8_t {
     Cartesian = 0,
     Polar = 1,
     Parametric = 2,
-    Implicit = 3
+    Implicit = 3,
+    Scatter = 4
   };
-  /* The kind of inequality is stored in the unused high bits of the plot type
+  /* The kind of equation is stored in the unused high bits of the plot type
    * byte. This keeps the record layout unchanged, so functions stored by an
    * older firmware are still read correctly (their high bits are zero). */
   enum class Inequality : uint8_t {
@@ -51,18 +60,36 @@ public:
     Inferior = 1,
     InferiorEqual = 2,
     Superior = 3,
-    SuperiorEqual = 4
+    SuperiorEqual = 4,
+    Piecewise = 5,
+    Point = 6,
+    PointList = 7
   };
   PlotType plotType() const;
   void setPlotType(PlotType plotType, Poincare::Preferences::AngleUnit angleUnit, Poincare::Context * context);
   Inequality inequality() const;
   void setInequality(Inequality inequality);
-  bool isInequality() const { return inequality() != Inequality::None; }
+  bool isInequality() const {
+    Inequality kind = inequality();
+    return kind == Inequality::Inferior || kind == Inequality::InferiorEqual ||
+           kind == Inequality::Superior || kind == Inequality::SuperiorEqual;
+  }
   bool isImplicit() const { return plotType() == PlotType::Implicit; }
+  bool isPiecewise() const { return inequality() == Inequality::Piecewise; }
+  bool isPoint() const { return inequality() == Inequality::Point; }
+  bool isPointList() const { return inequality() == Inequality::PointList; }
+  bool isScatter() const { return plotType() == PlotType::Scatter; }
+  bool isScatterPlot() const { return isPoint() || isPointList(); }
+  bool isRawContent() const { return isPiecewise() || isScatterPlot(); }
   /* Evaluate the left member of an implicit equation, or the expression of
    * an implicit inequality. The expression may contain both x and y. */
   double evaluateImplicitAt(double x, double y, Poincare::Context * context) const;
   static I18n::Message ParameterMessageForPlotType(PlotType plotType);
+
+  // Scatter plots
+  int numberOfPoints() const;
+  bool pointAtIndex(int index, Poincare::Coordinate2D<double> * point,
+                    Poincare::Context * context) const;
 
   // Evaluation
   Poincare::Coordinate2D<double> evaluate2DAtParameter(double t, Poincare::Context * context) const {
@@ -84,12 +111,12 @@ public:
   int printValue(double cursorT, double cursorX, double cursorY, char * buffer, int bufferSize, int precision, Poincare::Context * context) override;
 
   // tMin and tMax
-  bool shouldClipTRangeToXRange() const override { return plotType() == PlotType::Cartesian; }
+  bool shouldClipTRangeToXRange() const override { return plotType() == PlotType::Cartesian && !isScatter(); }
   float tMin() const override;
   float tMax() const override;
   void setTMin(float tMin);
   void setTMax(float tMax);
-  float rangeStep() const override { return plotType() == PlotType::Cartesian ? NAN : (tMax() - tMin())/k_polarParamRangeSearchNumberOfPoints; }
+  float rangeStep() const override { return (plotType() == PlotType::Cartesian || isScatter()) ? NAN : (tMax() - tMin())/k_polarParamRangeSearchNumberOfPoints; }
 
   void rangeForDisplay(float * xMin, float * xMax, float * yMin, float * yMax, float targetRatio, Poincare::Context * context) const override;
 
@@ -115,6 +142,18 @@ private:
 
   void fullXYRange(float * xMin, float * xMax, float * yMin, float * yMax, Poincare::Context * context) const;
   bool basedOnCostlyAlgorithms(Poincare::Context * context) const;
+
+  const char * rawContent() const {
+    return reinterpret_cast<const char *>(value().buffer) + sizeof(RecordDataBuffer);
+  }
+  Ion::Storage::Record::ErrorStatus setRawContent(const char * text,
+                                                  Inequality kind);
+  Ion::Storage::Record::ErrorStatus setExpressionText(const char * text,
+                                                      Poincare::Context * context,
+                                                      CodePoint symbol);
+  void resetRawFlag();
+  const FunctionEquation::Piecewise & piecewise(
+      Poincare::Context * context) const;
 
   /* RecordDataBuffer is the layout of the data buffer of Record
    * representing a ContinuousFunction. See comment on
@@ -157,6 +196,7 @@ private:
   template<typename T> Poincare::Coordinate2D<T> templatedApproximateAtParameter(T t, Poincare::Context * context) const;
   Model m_model;
   ContinuousFunctionCache * m_cache;
+  mutable FunctionEquation::Piecewise m_piecewise;
 };
 
 }

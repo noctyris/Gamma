@@ -166,7 +166,7 @@ void ValuesController::updateNumberOfColumns() const {
   for (int i = 0; i < functionStore()->numberOfActiveFunctions(); i++) {
     Ion::Storage::Record record = functionStore()->activeRecordAtIndex(i);
     ExpiringPointer<ContinuousFunction> f = functionStore()->modelForRecord(record);
-    if (f->isImplicit()) {
+    if (f->isImplicit() || f->isScatter()) {
       continue;
     }
     int plotTypeIndex = static_cast<int>(f->plotType());
@@ -216,7 +216,7 @@ int ValuesController::numberOfColumnsForAbscissaColumn(int column) {
 
 int ValuesController::numberOfColumnsForRecord(Ion::Storage::Record record) const {
   ExpiringPointer<ContinuousFunction> f = functionStore()->modelForRecord(record);
-  if (f->isImplicit()) {
+  if (f->isImplicit() || f->isScatter()) {
     return 0;
   }
   ContinuousFunction::PlotType plotType = f->plotType();
@@ -309,7 +309,10 @@ void ValuesController::fillMemoizedBuffer(int column, int row, int index) {
 ViewController * ValuesController::functionParameterController() {
   bool isDerivative = false;
   Ion::Storage::Record record = recordAtColumn(selectedColumn(), &isDerivative);
-  if (functionStore()->modelForRecord(record)->plotType() != ContinuousFunction::PlotType::Cartesian) {
+  Shared::ExpiringPointer<ContinuousFunction> function =
+      functionStore()->modelForRecord(record);
+  if (function->plotType() != ContinuousFunction::PlotType::Cartesian ||
+      function->isPiecewise() || function->isScatter()) {
     return nullptr;
   }
   if (isDerivative) {

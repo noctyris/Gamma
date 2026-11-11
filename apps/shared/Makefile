@@ -1,5 +1,6 @@
 app_shared_test_src = $(addprefix apps/shared/,\
   continuous_function.cpp\
+  function_equation.cpp\
   continuous_function_cache.cpp \
   curve_view_cursor.cpp \
   curve_view_range.cpp \

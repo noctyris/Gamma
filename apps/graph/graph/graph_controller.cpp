@@ -47,8 +47,11 @@ void GraphController::selectFunctionWithCursor(int functionIndex) {
 
 void GraphController::reloadBannerView() {
   Ion::Storage::Record record = functionStore()->activeRecordAtIndex(indexFunctionSelectedByCursor());
+  ExpiringPointer<ContinuousFunction> selectedFunction =
+      functionStore()->modelForRecord(record);
   bool displayDerivative = *m_displayDerivativeInBanner &&
-    functionStore()->modelForRecord(record)->plotType() == ContinuousFunction::PlotType::Cartesian;
+    selectedFunction->plotType() == ContinuousFunction::PlotType::Cartesian &&
+    !selectedFunction->isPiecewise() && !selectedFunction->isScatter();
   m_bannerView.setNumberOfSubviews(Shared::XYBannerView::k_numberOfSubviews + displayDerivative);
   FunctionGraphController::reloadBannerView();
   if (!displayDerivative) {
@@ -59,7 +62,9 @@ void GraphController::reloadBannerView() {
 
 bool GraphController::moveCursorHorizontally(int direction, int scrollSpeed) {
   Ion::Storage::Record record = functionStore()->activeRecordAtIndex(indexFunctionSelectedByCursor());
-  if (functionStore()->modelForRecord(record)->isImplicit()) {
+  ExpiringPointer<ContinuousFunction> function =
+      functionStore()->modelForRecord(record);
+  if (function->isImplicit() || function->isScatter()) {
     return false;
   }
   return privateMoveCursorHorizontally(m_cursor, direction, m_graphRange, k_numberOfCursorStepsInGradUnit, record, scrollSpeed);
@@ -76,7 +81,7 @@ int GraphController::nextCurveIndexVertically(bool goingUp, int currentSelectedC
 
 double GraphController::defaultCursorT(Ion::Storage::Record record) {
   ExpiringPointer<ContinuousFunction> function = functionStore()->modelForRecord(record);
-  if (function->isImplicit()) {
+  if (function->isImplicit() || function->isScatter()) {
     return 0.0;
   }
   if (function->plotType() == ContinuousFunction::PlotType::Cartesian) {
@@ -99,6 +104,9 @@ void GraphController::jumpToLeftRightCurve(double t, int direction, int function
       continue;
     }
     ExpiringPointer<ContinuousFunction> f = functionStore()->modelForRecord(currentRecord);
+    if (f->isScatter()) {
+      continue;
+    }
     assert(f->plotType() == ContinuousFunction::PlotType::Cartesian);
     /* Select the closest horizontal curve, then the closest vertically, then
      * the lowest curve index. */
