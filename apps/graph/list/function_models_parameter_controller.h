@@ -23,11 +23,13 @@ public:
   int indexFromCumulatedHeight(KDCoordinate offsetY) override;
   HighlightCell * reusableCell(int index, int type) override;
   int reusableCellCount(int type) override;
+  void willDisplayCellForIndex(HighlightCell * cell, int index) override;
   int typeAtLocation(int i, int j) override;
 
 private:
   constexpr static int k_numberOfModels = 12;
   constexpr static int k_numberOfExpressionCells = k_numberOfModels - 1;
+  constexpr static int k_numberOfReusableCells = 5;
   static constexpr const char * k_modelDescriptions[k_numberOfExpressionCells] = {
     "f(x)=x",
     "x+y+1=0",
@@ -42,7 +44,7 @@ private:
     "y≥f(x)"
   };
   MessageTableCell<> m_emptyModelCell;
-  ExpressionTableCell m_modelCells[k_numberOfExpressionCells];
+  ExpressionTableCell m_modelCells[k_numberOfReusableCells];
   SelectableTableView m_selectableTableView;
   ListController * m_listController;
 };
