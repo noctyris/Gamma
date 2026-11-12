@@ -1,113 +1,67 @@
-<p align="center"><img src="https://github.com/TildeEthDoUsPart/UpsilonDesign/blob/89a15953ae128aef8aa7d066dcaaf8d5c70f02a5/UPSILogo.png" /></p>
-
 <p align="center">
-  <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="cc by-nc-sa 4.0" src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-525252.svg?labelColor=292929&logo=creative%20commons&style=for-the-badge" /></a>
-  <a href="https://github.com/UpsilonNumworks/Upsilon/issues"><img alt="Issues" src="https://img.shields.io/github/issues/UpsilonNumworks/Upsilon.svg?labelColor=292929&logo=git&style=for-the-badge" /></a>
-  <br/>
-  <a href="https://discord.gg/hnEqPzAJzn"><img alt="Discord" src="https://img.shields.io/discord/663420259851567114?color=blue&labelColor=292929&label=chat%20-%20discord&logo=discord&style=for-the-badge" /></a>
+  <strong>Gamma</strong><br/>
+  A community operating system for NumWorks calculators.
 </p>
 
-> 🇫🇷 Vous ne comprenez pas l'anglais ? Vous êtes francophone ? Regardez le [*LISEZ-MOI* français](./README.fr.md) ! 🇫🇷
+<p align="center">
+  <a href="https://github.com/noctyris/Gamma/issues"><img alt="Issues" src="https://img.shields.io/github/issues/noctyris/Gamma?style=for-the-badge" /></a>
+  <a href="https://github.com/noctyris/Gamma/commits/gamma-dev"><img alt="Last commit" src="https://img.shields.io/github/last-commit/noctyris/Gamma/gamma-dev?style=for-the-badge" /></a>
+  <a href="./LICENSE.md"><img alt="License: CC BY-NC-SA 4.0" src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-525252.svg?labelColor=292929&logo=creative%20commons&style=for-the-badge" /></a>
+</p>
+
+> 🇫🇷 Vous préférez le français ? Lisez le [README français](./README.fr.md).
 
 ## About
 
-Upsilon is a fork of Omega, an user-made OS that runs on the NumWorks calculator, which brings many features to it, but was discontinued because of a policy change from NumWorks. Upsilon is for the people who want to see a future for user-made OSes for NumWorks, even after the closure and archiving of Omega.
+Gamma is a community operating system for NumWorks calculators. It continues the
+lineage **Epsilon 15.5.0 → Omega → Upsilon → Gamma** and keeps the features built
+by the previous projects while adding its own.
 
-### Some new features
+Gamma is based on the public **Epsilon 15.5.0** sources. Epsilon 16.0.0 and later
+are published by NumWorks without the CC BY-NC-SA license (the README states
+“All rights reserved”), so Gamma does **not** import code from those versions.
+See [NOTICE.md](./NOTICE.md).
 
-- Enhancements for the Kandinsky python module
-- Support for wallpapers
-- External apps
-- A custom theme
-- Operator overload for python
-- Improvements for the Periodic table application
-- *And everything that has been added to Omega before its termination!* [See Omega's changelog here](https://github.com/Omega-Numworks/Omega/wiki/Changelog) | [Main Omega features + screenshots](https://github.com/Omega-Numworks/Omega/wiki/Main-features).
+## Features
 
-<br>
+- Gamma theme and theme engine, with light and dark themes
+- Wallpapers and external applications (NWA)
+- RPN and Atomic applications
+- Reader application
+- Python extensions: ulab, operator overloading, `os.uname`, `getlogin`
+- Accessibility options: inverted colors, magnifier, RGB gamma correction
+- Finance application (TVM)
+- Graph improvements: implicit plots, inequalities, function types
+- Eight languages: English, French, Dutch, Portuguese, Italian, German, Spanish, Hungarian
+- NumWorks n0100 and n0110 support, including bootloader slots A/B/Khi
 
-## Installation
+## Version
 
-### Installer
+`GAMMA_VERSION` is derived from git history, so it increments without a manual
+version file:
 
-Go to the [Upsilon website](https://getupsilon.web.app/) to the "Install" section.
-If your calculator is recognized, contains a version of Epsilon lower than 16 and your browser accepts WebUSB, the page will suggest you to install Upsilon.
-Do not disconnect your calculator until the installation is complete.
+- a regular commit increments the patch number (`1.0.0` → `1.0.1`);
+- an integration merge increments the minor number and resets the patch
+  (`1.0.1` → `1.1.0`);
+- the major number is set manually with `GAMMA_VERSION_MAJOR` or a full
+  `GAMMA_VERSION` override for a release.
 
-### Manual
+The version is shown in the bootloader's About menu and next to the Gamma slots.
+`make info` prints the current value.
 
- *You can refer to this [website](https://www.numworks.com/resources/engineering/software/build/) for the first step if you get errors.*
+## Build
 
-### 1. Install SDK
+### Requirements
 
-<br>
-
-<details>
-
-<summary><b>1.1 Linux</b></summary>
-
-<br>
-
-<details>
-
-<summary>Debian or Ubuntu</summary>
-
-<br>
-
-You just have to install dependencies by running these command with superuser privileges in a Terminal:
+Gamma uses the same toolchain as Epsilon 15.5.0. On Debian or Ubuntu:
 
 ```bash
-apt-get install build-essential git imagemagick libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev pkg-config gcc-arm-none-eabi binutils-arm-none-eabi
+sudo apt-get install build-essential git imagemagick libx11-dev libxext-dev \
+  libfreetype6-dev libpng-dev libjpeg-dev pkg-config \
+  gcc-arm-none-eabi binutils-arm-none-eabi
 ```
 
-And there you can go to step 2!
-
-<br>
-
-</details>
-
-<details>
-
-<summary>Fedora</summary>
-
-<br>
-
-To install all dependencies:
-
-```bash
-dnf install make automake gcc gcc-c++ kernel-devel git ImageMagick libX11-devel libXext-devel freetype-devel libpng-devel libjpeg-devel pkg-config arm-none-eabi-gcc-cs arm-none-eabi-gcc-cs-c++
-```
-
-<br>
-
-</details>
-
-<details>
-
-<summary>Nix or Nixos</summary>
-
-<br>
-
-To install all dependencies:
-
-```bash
-nix-shell -p gcc libpng libjpeg xorg.libX11 pkg-config freetype xorg.libXext python3 imagemagick python310Packages.lz4 python310Packages.pypng python310Packages.pypng gcc-arm-embedded
-```
-
-<br>
-
-</details>
-
-<br>
-
-</details>
-
-<details>
-
-<summary><b>1.2 Mac</b></summary>
-
-<br>
-
-It's recommended to use [Homebrew](https://brew.sh/). Once it's installed, just run:
+On macOS with Homebrew:
 
 ```bash
 brew install freetype imagemagick libpng libusb pkg-config python3
@@ -115,420 +69,123 @@ python3 -m venv .venv
 .venv/bin/pip3 install setuptools lz4 pypng stringcase
 ```
 
-and all dependencies will be installed.
+On Windows, use MSYS2 or WSL 2. The ARM cross-compiler is only needed for device
+builds.
 
-<br>
-
-And there you can go to step 2!
-
-<br>
-
-</details>
-
-<details>
-
-<summary><b>1.3 Windows</b></summary>
-
-<br>
-
-<details>
-
-<summary>With Msys2/Mingw (officialized by NumWorks but with a lot of bugs)</summary>
-
-[Msys2](https://www.msys2.org/) environment is recommended by NumWorks to get most of the required tools on Windows easily. It's where you'll paste all the commands of this tutorial. Once it's installed, paste these commands into the Msys2 terminal.
+### Clone
 
 ```bash
-pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-freetype mingw-w64-x86_64-pkg-config mingw-w64-x86_64-libusb git make python
-echo "export PATH=/mingw64/bin:$PATH" >> .bashrc
+git clone --recursive https://github.com/noctyris/Gamma.git
+cd Gamma
+git checkout gamma-dev
 ```
 
-Next, you'll need to install the [GCC toolchain for ARM](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads). When prompted for an install location, choose `C:\msys64\home\User\gcc-arm\`. You'll then need to add this folder to your $PATH. Just enter:
+### Simulator
 
 ```bash
-echo "export PATH=$PATH:$HOME/gcc-arm/bin" >> .bashrc
+make PLATFORM=simulator TARGET=linux -j$(nproc)
 ```
 
-Just restart terminal and you can go to step 2!
-
-</details>
-
-<details>
-
-<summary>With WSL 2</summary>
-
-You need a Windows version >= 1903.
-
-#### WSL Installation
-
-1. Use simultaneously Win + X keys and then click on "admin powershell".
-
-```powershell
-dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-```
-
-This command activate WSL functionalities.
-
-```powershell
-dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-```
-
-This one allows virtual machines developed by Microsoft.
-
-2. Restart your computer.
-
-3. Download [this file](https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi) and follow instructions.
-
-4. Now open powershell admin like before and type:
-
-```powershell
-wsl --set-default-version 2
-```
-
-5. Download [Ubuntu](https://www.microsoft.com/store/apps/9n6svws3rx71) from Microsoft store.
-
-WSL is now installed.
-
-6. Then Install GCC cross compiler for ARM. In your Ubuntu teminal, run:
-<!-- TODO: Test if `wsl --install` works better, and if WSL2 has not became the
-default -->
+The simulator is written to `output/release/simulator/linux/`. To build and run
+the tests:
 
 ```bash
-sudo apt-get update
-sudo apt-get install build-essential git imagemagick libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev pkg-config gcc-arm-none-eabi binutils-arm-none-eabi
+make PLATFORM=simulator TARGET=linux test -j$(nproc)
+./output/release/simulator/linux/test.bin --headless
 ```
 
-### Usbipd installation to connect your calculator
+### Web simulator
 
-If you want to connect to the calculator, you have to connect to install this
-[tool](https://github.com/dorssel/usbipd-win/releases/download/v5.0.0/usbipd-win_5.0.0_x64.msi).
-This will allow you to connect WSL to the calculator through internet. Follow
-the on screen information to install.
-
-#### Ubuntu
-
-1. In a WSL Ubuntu command prompt, type:
+Install emsdk 4.0.22, activate it, then:
 
 ```bash
-sudo apt install linux-tools-generic hwdata
+make PLATFORM=simulator TARGET=web htmlpack.zip -j$(nproc)
 ```
 
-<!-- 2. Edit /etc/sudoers so that root can find the usbip command. On Ubuntu, run this command.
+The archive is written to `output/release/simulator/web/htmlpack.zip`.
+
+### NumWorks n0100
 
 ```bash
-sudo visudo
-```
-
-3. Add `/usr/lib/linux-tools/5.4.0-77-generic` to the beginning of secure_path. After editing, the line should look similar to this.
-`Defaults secure_path="/usr/lib/linux-tools/5.4.0-77-generic:/usr/local/sbin:..."` -->
-
-#### Debian
-
-1. If you use Debian for your WSL distro, use this command instead:
-
-```bash
-sudo apt install usbip hwdata usbutils
-```
-
-And that's all for installation and set up.
-
-### To connect your calculator
-
-1. Open an admin PowerShell and type:
-
-```powershell
-usbipd list
-```
-
-This will list your USB devices connected. Look at the BUSID column and remember the one for your calculator (it should be called "Numworks Calculator").
-2. Now run this command replacing `<BUSID>` by your calculator's USB port id:
-
-```powershell
-usbipd bind --busid <BUSID>
-usbipd attach --wsl --busid <BUSID>
-
-```
-
-It will ask you to type your WSL's password and will connect your calculator to WSL.
-
-You can now go to step 2!
-
-</details>
-
-</details>
-
-<br>
-
-### 2. Set up repo
-
-Clone repo and use 'upsilon-dev' branch by pasting these two commands:
-
-```bash
-git clone --recursive https://github.com/UpsilonNumworks/Upsilon.git
-cd Upsilon
-git checkout upsilon-dev
-```
-
-<br>
-
-### 3. Choose the target
-
-<details>
-
-<summary><b>Model n0100</b></summary>
-
-(note: you can change the `EPSILON_I18N=en` flag to `fr`, `nl`, `pt`, `it`, `de`, `es` or `hu`).
-
-```bash
-make MODEL=n0100 clean
-make MODEL=n0100 EPSILON_I18N=en OMEGA_USERNAME="{Your name, max 15 characters}" -j$(nproc)
-```
-
-Now, run either:
-
-```bash
+make MODEL=n0100 EPSILON_I18N=en GAMMA_USERNAME="Your name" -j$(nproc)
 make MODEL=n0100 epsilon_flash
 ```
 
-to directly flash the calculator after pressing simultaneously `reset` and `6` buttons and plugging in.
+Only one language is supported on n0100; the build defaults to English and
+removes the Reader and ulab.
 
-<br>
+### NumWorks n0110
 
-or:
-
-```bash
-make MODEL=n0100 OMEGA_USERNAME="" binpack -j$(nproc)
-```
-
-to make binpack which you can flash to the calculator from [TI-Planet's WebDFU](https://ti-planet.github.io/webdfu_numworks/n0100/). Binpacks are a great way to share a custom build of Upsilon to friends.
-
-</details>
-
-<details>
-
-<summary><b>Model n0110</b></summary>
-
-The bootloader allows you to install 2 firmwares in separated "slots". If so, external apps won't have all the space but half. Bootloader will allow use of all of the memory if only one slot is flashed. In legacy mode, external apps use all the space available.
-
-<details>
-<summary>Bootloader</summary>
-
-Your calculator must already have been flashed with [Upsilon](https://getupsilon.web.app)'s or [Omega](https://getomega.dev)'s bootloader.
-Then, build with:
+With the Gamma/Omega/Upsilon bootloader:
 
 ```bash
-make clean
-make OMEGA_USERNAME="{Your name, max 15 characters}" -j$(nproc)
-```
-
-Now, run either:
-
-```bash
+make MODEL=bootloader GAMMA_USERNAME="Your name" -j$(nproc)
 make epsilon.A_flash
 ```
 
-to directly flash the calculator into the current slot, or thought bootloader's slot flasher with RESET, then 4 (flash), and 1 (flash slots) for other slots.
-
-<br>
-
-or:
+Without the bootloader (legacy, deprecated):
 
 ```bash
-make OMEGA_USERNAME="" binpack -j$(nproc)
-```
-
-to make binpack which you can flash to the calculator from [TI-Planet's webDFU](https://ti-planet.github.io/webdfu_numworks/n0110/). You'll find them at `output/release/device/bootloader/`. Binpacks are a great way to share a custom build of Upsilon to friends.
-</details>
-
-
-
-<details>
-<summary>Model N0110 legacy (deprecated, use bootloader instead for Epsilon protection)</summary>
-
-```bash
-make MODEL=n0110 clean
-make MODEL=n0110 OMEGA_USERNAME="{Your name, max 15 characters}" -j$(nproc)
-```
-
-Now, run either:
-
-```bash
+make MODEL=n0110 GAMMA_USERNAME="Your name" -j$(nproc)
 make MODEL=n0110 epsilon_flash
 ```
 
-to directly flash the calculator after pressing simultaneously `reset` and `6` buttons and plugging in.
+`GAMMA_USERNAME` is the preferred spelling. `OMEGA_USERNAME` is still accepted
+for compatibility with old build scripts.
 
-<br>
-
-or:
-
-```bash
-make MODEL=n0110 OMEGA_USERNAME="" binpack -j$(nproc)
-```
-
-to make binpack which you can flash to the calculator from [Ti-Planet's WebDFU](https://ti-planet.github.io/webdfu_numworks/n0110/). You'll find them at `output/release/device/bootloader/`. Binpacks are a great way to share a custom build of Upsilon to friends.
-</details>
-
-</details>
-
-
-<details>
-
-<summary><b>Native simulator</b></summary>
-
-Run this command:
-```bash
-make clean
-```
-You can either build using the following command that will automatically detect your platform:
-```bash
-make PLATFORM=simulator
-```
-or, choose the command corresponding to your platform:
-```bash
-make PLATFORM=simulator TARGET=android
-make PLATFORM=simulator TARGET=ios
-make PLATFORM=simulator TARGET=macos
-make PLATFORM=simulator TARGET=web
-make PLATFORM=simulator TARGET=windows
-make PLATFORM=simulator TARGET=3ds
-```
-
-You'll find simulator files in `output/release/simulator/`.
-
-</details>
-
-
-<details>
-
-<summary><b>Web simulator</b></summary>
-
-First, install emsdk :
+### Other targets
 
 ```bash
-git clone https://github.com/emscripten-core/emsdk.git
-cd emsdk
-./emsdk install 4.0.22
-./emsdk activate 4.0.22
-source emsdk_env.sh
+make PLATFORM=simulator TARGET=android -j$(nproc)   # epsilon.apk
+make PLATFORM=simulator TARGET=3ds -j$(nproc)       # epsilon.3dsx
+make PLATFORM=simulator TARGET=fxcg -j$(nproc)      # epsilon.g3a
+make PLATFORM=simulator TARGET=macos -j$(nproc)
+make PLATFORM=simulator TARGET=windows -j$(nproc)
 ```
 
-Then, compile Upsilon :
+Run `make help` for the full list.
 
-```bash
-make clean
-make PLATFORM=simulator TARGET=web OMEGA_USERNAME="{Your name, max 15 characters}" -j$(nproc)
-```
+## Installation
 
-The simulator is now in `output/release/simulator/web/simulator.zip`
+There is no official Gamma installer or hosted build yet. Build the firmware
+yourself, verify the artifact, and flash it with the appropriate tool. Never
+flash a binary from an untrusted source: a firmware has full access to the
+calculator.
 
-</details>
-
-<details>
-
-<summary><b>3DS Simulator</b></summary>
-
-You need devkitPro and devkitARM installed and in your path (instructions [here](https://devkitpro.org/wiki/Getting_Started))
-
-```bash
-git clone --recursive https://github.com/UpsilonNumworks/Upsilon.git
-cd Upsilon
-git checkout upsilon-dev
-make PLATFORM=simulator TARGET=3ds -j$(nproc)
-```
-
-You can then put epsilon.3dsx on a SD card to run it from the HBC or use 3dslink to launch it over the network:
-
-```bash
-3dslink output/release/simulator/3ds/epsilon.3dsx -a <3DS' IP ADDRESS>
-```
-
-</details>
-
-<details>
-
-<summary><b>Android Simulator</b></summary>
-
-Make sure you have JDK 25 installed.
-Then, download the Android toolchain r27d as following :
-```
-export ANDROID_HOME=$PWD/android-sdk
-wget -nv https://gitlab.com/fdroid/sdkmanager/-/raw/master/sdkmanager.py
-python3 sdkmanager.py --licenses
-python3 sdkmanager.py --install "ndk-bundle;r27d"
-```
-All you have to do is run this command to compile Upsilon.
-```
-make -j$(nproc) PLATFORM=simulator TARGET=android
-```
-The compiled file named `epsilon.apk` will be the one to install on the phone from your file manager. Should work on Android 5+.
-
-</details>
-
-<details>
-  <summary><b>Casio fx-CG-series Port</b></summary>
-
-First, install gint and fxsdk along with a cross compiler for the calculator. There are instructions for this (in French, but Google Translate works well enough) [here](https://www.planet-casio.com/Fr/forums/topic16614-last-giteapc-installer-et-mettre-a-jour-automatiquement-des-projets-gitea.html).
-
-Next:
-```bash
-git clone --recursive https://github.com/UpsilonNumworks/Upsilon.git
-cd Upsilon
-git checkout upsilon-dev
-make PLATFORM=simulator TARGET=fxcg -j$(nproc)
-```
-Then copy the file at `./output/release/simulator/fxcg/epsilon.g3a` to the calculator over USB.
-
-</details>
-
-Important: Don't forget the `--recursive` tag, because Upsilon relies on submodules.
-Also, you can change the number of processes that run in parallel during the build by changing the value of the `-j` flag.
-Don't forget to put your pseudo instead of `{your pseudo, max 15 char}`. If you don't want one, just remove the `OMEGA_USERNAME=""` argument.
-
-<br>
-
-If you need help, you can join our Discord server here : <https://discord.gg/NFvzdCBTQn>
-
-<a href="https://discord.gg/NFvzdCBTQn"><p align="center"><img alt="Omega Banner Discord" src="https://user-images.githubusercontent.com/12123721/86287349-54ef5800-bbe8-11ea-80c1-34eb1f93eebd.png" /></p></a>
-
----
-
-## Useful links
-
-- [Upsilon external (to install additional apps and wallpapers)](https://upsilonnumworks.github.io/Upsilon-External/)
-- [Ulab documentation](https://micropython-ulab.readthedocs.io/en/latest/)
+The bootloader keeps two slots. A bootloader build can be flashed into slot A or
+B and keeps the other slot intact. The legacy n0110 build has no slot protection.
 
 ## Contributing
 
-To contribute, please refer to [Omega's Wiki](https://github.com/Omega-Numworks/Omega/wiki/Contributing), the same rules apply here.
+Contributions are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) before
+opening a pull request. For a bug, use the issue templates. For a security
+issue, follow [SECURITY.md](./.github/SECURITY.md).
 
-## Related repositories
-
-Here are the main links toward Omega's different websites and repositories, that have been used for the creation of Upsilon.
-
-- [Omega Themes](https://github.com/Omega-Numworks/Omega-Themes)
-- [Omega Website](https://github.com/Omega-Numworks/Omega-Website)
-- [Omega RPN `APP`](https://github.com/Omega-Numworks/Omega-RPN)
-- [Omega Atomic `APP`](https://github.com/Omega-Numworks/Omega-Atomic)
-- [Omega Design](https://github.com/Omega-Numworks/Omega-Design)
-- [Omega Discord Bot](https://github.com/Omega-Numworks/Omega-Discord-Bot)
-- [Omega App Template `BETA`](https://github.com/Omega-Numworks/Omega-App-Template)
-- [External Apps](https://github.com/Omega-Numworks/External-Apps)
-
-## About Epsilon
-
-Upsilon is a fork of Omega, after the project's discontinuation.
-
-Omega is a fork of Epsilon, a high-performance graphing calculator operating system. It includes eight apps that cover the high school mathematics curriculum.
-
-You can try Epsilon straight from your browser in the [online simulator](https://www.numworks.com/simulator/).
+The main development branch is `gamma-dev`; `gamma` is the stable branch. Do not
+open pull requests directly against a release tag.
 
 ## License
 
-NumWorks is a registered trademark of NumWorks SAS, 24 Rue Godot de Mauroy, 75009 Paris, France.
-Nintendo and Nintendo 3DS are registered trademarks of Nintendo of America Inc, 4600 150th Ave NE, Redmond, WA 98052, USA.
-Casio is a registered trademark of Casio Computer Co., Ltd. CORPORATION JAPAN 6-2, Hon-machi 1-chome Shibuya-ku, Tokyo JAPAN 151-8543.
-NumWorks SAS, Nintendo of America Inc and Casio aren't associated in any shape or form with this project.
+Gamma is distributed under the
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)
+license, like Epsilon 15.5.0, Omega and Upsilon.
 
-- NumWorks Epsilon is released under a [CC BY-NC-SA License](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
-- Omega is released under a [CC BY-NC-SA License](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
-- Upsilon is released under a [CC BY-NC-SA License](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
+- **Epsilon 15.5.0**: CC BY-NC-SA 4.0. This is the base of Gamma.
+- **Epsilon 16.0.0 and later**: no `LICENSE` file; the upstream README states
+  “All rights reserved”. Gamma does not include code from these versions.
+- **Omega** and **Upsilon**: CC BY-NC-SA 4.0.
+
+See [NOTICE.md](./NOTICE.md) for the full notice, trademarks and third-party
+components.
+
+## Links
+
+- [Issue tracker](https://github.com/noctyris/Gamma/issues)
+- [Discussions](https://github.com/noctyris/Gamma/discussions)
+- [Build documentation](./docs/)
+- [Contributing guide](./CONTRIBUTING.md)
+
+NumWorks is a registered trademark of NumWorks SAS. Nintendo and Nintendo 3DS
+are registered trademarks of Nintendo of America Inc. Casio is a registered
+trademark of Casio Computer Co., Ltd. None of these companies is associated
+with Gamma.
