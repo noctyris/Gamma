@@ -1,19 +1,27 @@
 ---
-name: Problems during installation
-about: Need help to install Upsilon?
+name: Installation problem
+about: Need help building or installing Gamma?
 title: ''
-labels: 'Status: Triage, Type: Installation issue'
+labels: 'question'
 assignees: ''
 
 ---
 
 **Describe the problem**
-
-
-**Logs**
-```
-Copy/paste the logs here (If you have some)
-```
+What did you try to do, and what happened instead?
 
 **Environment**
- - Upsilon Version: {go to settings > about > Upsilon Version and type the version here}
+- Device: [n0100, n0110, simulator, other]
+- Current firmware: [official Epsilon version, Omega, Upsilon, Gamma, other]
+- Bootloader: [Gamma/Omega/Upsilon bootloader, official bootloader, none, unknown]
+- Host OS: [Linux, macOS, Windows, WSL]
+- Build command used:
+
+```bash
+# paste the exact command here
+```
+
+**Logs**
+```text
+Paste the exact build or flashing error here.
+```

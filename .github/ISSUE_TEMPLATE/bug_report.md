@@ -1,29 +1,31 @@
 ---
 name: Bug report
-about: Upsilon is not working like it should? Let us know!
+about: Something is not working in Gamma
 title: ''
-labels: 'Status: Triage, Type: Bug'
+labels: 'bug'
 assignees: ''
 
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+A clear and concise description of what is wrong.
 
-**To Reproduce**
+**To reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+2. Press '...'
+3. See error
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Environment**
+- Device: [n0100, n0110, Linux simulator, Windows simulator, macOS simulator, web, Android, 3DS, fxcg]
+- Gamma version: [Settings > About > Gamma version]
+- Gamma commit: [Settings > About > tap the Epsilon version once]
+- Epsilon base: [Settings > About > Epsilon version]
+- Installation method: [bootloader slot A/B, legacy flash, simulator, other]
 
-**Device (please complete the following information):**
- - The device on which you're running Upsilon (computer, n0110, n0100, etc...)
- - Upsilon Version: [go to settings > about > Upsilon Version and type the version here]
- - Upsilon commit: [settings > about > click one time on epsilon version]
+**Logs or screenshots**
+If applicable, add a screenshot, a serial log, or the exact error message.
+Do not paste personal data or storage contents.

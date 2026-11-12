@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Gamma discussions
+    url: https://github.com/noctyris/Gamma/discussions
+    about: Ask a question, share a build, or discuss a feature before opening an issue.
+  - name: Build and installation guide
+    url: https://github.com/noctyris/Gamma/blob/gamma-dev/README.md
+    about: Read the build instructions before reporting an installation problem.
+  - name: Security policy
+    url: https://github.com/noctyris/Gamma/blob/gamma-dev/.github/SECURITY.md
+    about: Report a vulnerability privately, not in a public issue.

@@ -1,0 +1,14 @@
+# Default owner for the whole repository.
+* @noctyris
+
+# Build, CI and repository infrastructure.
+/.github/ @noctyris
+/build/ @noctyris
+
+# Core subsystems.
+/apps/ @noctyris
+/bootloader/ @noctyris
+/ion/ @noctyris
+/poincare/ @noctyris
+/escher/ @noctyris
+/python/ @noctyris

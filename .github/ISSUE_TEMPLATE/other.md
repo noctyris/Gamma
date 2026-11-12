@@ -1,10 +1,14 @@
 ---
-name: Other
-about: A question? A problem? …
+name: Question or other
+about: Ask a question, report a documentation problem, or start a discussion
 title: ''
-labels: 'Status: Triage'
+labels: 'question'
 assignees: ''
 
 ---
 
+**Your question or topic**
 
+
+**Additional context**
+Add links, screenshots or anything useful to understand the request.
