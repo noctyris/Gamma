@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [gamma, gamma-dev]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator-linux:
+    name: Linux simulator and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential imagemagick libfreetype6-dev libjpeg-dev \
+            libpng-dev pkg-config libx11-dev libxext-dev
+
+      - name: Build simulator
+        run: make -j2 PLATFORM=simulator TARGET=linux
+
+      - name: Build tests
+        run: make -j2 PLATFORM=simulator TARGET=linux test
+
+      - name: Run tests
+        run: ./output/release/simulator/linux/test.bin --headless
+
+      - name: Upload simulator
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamma-simulator-linux
+          path: output/release/simulator/linux/epsilon.bin
+          if-no-files-found: ignore
+
+  device-n0110:
+    name: NumWorks n0110 firmware
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential imagemagick libfreetype6-dev libjpeg-dev \
+            libpng-dev pkg-config gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Build firmware
+        run: make -j2 MODEL=n0110 epsilon.dfu
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamma-n0110
+          path: output/release/device/n0110/epsilon.dfu
+          if-no-files-found: error
+
+  web:
+    name: Web simulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 4.0.22
+
+      - name: Build web simulator
+        run: make -j2 PLATFORM=simulator TARGET=web htmlpack.zip
+
+      - name: Upload web simulator
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamma-web
+          path: output/release/simulator/web/htmlpack.zip
+          if-no-files-found: error

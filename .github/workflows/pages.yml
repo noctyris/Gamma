@@ -1,0 +1,71 @@
+name: Pages
+
+on:
+  push:
+    branches: [gamma, gamma-dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build web simulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 4.0.22
+
+      - name: Build web simulator
+        run: make -j2 PLATFORM=simulator TARGET=web htmlpack.zip
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          unzip -q output/release/simulator/web/htmlpack.zip -d _site
+          if [ -d _site/htmlpack ]; then
+            cp -r _site/htmlpack/. _site/
+            rm -rf _site/htmlpack
+          fi
+          if [ -f _site/calculator.html ] && [ ! -f _site/index.html ]; then
+            cp _site/calculator.html _site/index.html
+          fi
+          if [ ! -f _site/index.html ]; then
+            echo "No index.html was produced by the web build"
+            find _site -maxdepth 2 -type f | sort
+            exit 1
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
