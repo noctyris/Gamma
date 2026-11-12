@@ -57,6 +57,8 @@ endif
 .PHONY: info
 info:
 	@echo "EPSILON_VERSION = $(EPSILON_VERSION)"
+	@echo "GAMMA_VERSION = $(GAMMA_VERSION)"
+	@echo "GAMMA_USERNAME = $(GAMMA_USERNAME)"
 	@echo "EPSILON_APPS = $(EPSILON_APPS)"
 	@echo "EPSILON_I18N = $(EPSILON_I18N)"
 	@echo "THEME_NAME = $(THEME_NAME)"
@@ -94,6 +96,20 @@ help:
 	@echo "  make PLATFORM=simulator TARGET=windows"
 	@echo "  make PLATFORM=simulator TARGET=3ds"
 	@echo "  make PLATFORM=simulator TARGET=fxcg"
+
+.PHONY: test
+test: $(BUILD_DIR)/test.$(EXE)
+
+.PHONY: merge-check
+merge-check:
+	@echo "MERGE CHECK: linux simulator"
+	$(MAKE) PLATFORM=simulator TARGET=linux -j2
+	@echo "MERGE CHECK: linux tests"
+	$(MAKE) PLATFORM=simulator TARGET=linux test -j2
+	@echo "MERGE CHECK: web simulator"
+	$(MAKE) PLATFORM=simulator TARGET=web htmlpack.zip -j2
+	@echo "MERGE CHECK: n0110 device"
+	$(MAKE) MODEL=n0110 epsilon.dfu -j2
 
 .PHONY: doc
 doc:

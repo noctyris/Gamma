@@ -207,6 +207,7 @@ void AboutController::willDisplayCellForIndex(HighlightCell * cell, int index) {
 
     static const char * messages[] = {
       (const char*) Ion::username(),
+      Ion::gammaVersion(),
       Ion::upsilonVersion(),
       Ion::omegaVersion(),
       Ion::softwareVersion(),

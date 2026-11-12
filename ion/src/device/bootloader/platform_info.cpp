@@ -18,6 +18,10 @@
 #error This file expects UPSILON_VERSION to be defined
 #endif
 
+#ifndef GAMMA_VERSION
+#error This file expects GAMMA_VERSION to be defined
+#endif
+
 extern "C" {
   extern void recovery_start();
   extern void eadk_display_draw_string(const char * text, KDPoint point, bool large_font, KDColor text_color, KDColor background_color);
@@ -105,12 +109,16 @@ struct UserlandHeader {
   recoveryStartPointerType m_recoveryAddress;
   uint32_t m_extraVersion;
   uint32_t m_upsilonExtraMagicFooter;
+  uint32_t m_gammaMagicHeader;
+  const char m_GammaVersion[16];
+  uint32_t m_gammaMagicFooter;
 };
 constexpr static uint32_t Magic = 0xDEC0EDFE;
 constexpr static uint32_t OmegaMagic = 0xEFBEADDE;
 constexpr static uint32_t UpsilonMagic = 0x55707369;
 constexpr static uint32_t OSType = 0x79827178;
 constexpr static uint32_t UpsilonExtraMagic = 0xaa7073ff;
+constexpr static uint32_t GammaMagic = 0x47616d6d;
 
 const UserlandHeader __attribute__((section(".userland_header"), used)) k_userlandHeader = {
   .m_header = Magic,
@@ -147,6 +155,9 @@ const UserlandHeader __attribute__((section(".userland_header"), used)) k_userla
   .m_recoveryAddress = recoveryStartPointer,
   .m_extraVersion = 1,
   .m_upsilonExtraMagicFooter = UpsilonExtraMagic,
+  .m_gammaMagicHeader = GammaMagic,
+  .m_GammaVersion = {GAMMA_VERSION},
+  .m_gammaMagicFooter = GammaMagic,
 };
 
 
@@ -181,6 +192,10 @@ const char * Ion::omegaVersion() {
 
 const char * Ion::upsilonVersion() {
   return k_userlandHeader.m_UpsilonVersion;
+}
+
+const char * Ion::gammaVersion() {
+  return k_userlandHeader.m_GammaVersion;
 }
 
 const volatile char * Ion::username() {

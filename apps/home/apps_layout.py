@@ -6,6 +6,7 @@
 import argparse
 import csv
 import io
+import os
 
 parser = argparse.ArgumentParser(description="Build tools for the placement of applications on the home menu.")
 parser.add_argument('--header', help='the .h file to generate')
@@ -15,6 +16,10 @@ parser.add_argument('--layouts', help='the apps_layout.csv file')
 parser.add_argument('--apps_layout', help='the apps_layout from the make command')
 
 args = parser.parse_args()
+
+layout_dir = os.path.dirname(os.path.abspath(args.layouts))
+if layout_dir:
+    os.makedirs(layout_dir, exist_ok=True)
 
 with io.open(args.layouts, "w", encoding="utf-8") as f:
     ordered = args.apps_layout.split()

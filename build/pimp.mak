@@ -10,7 +10,7 @@ PLS_IGNORE := $(shell >&2 printf "\e[91m\e[36m          / /                     
 PLS_IGNORE := $(shell >&2 printf "\e[91m\e[36m         /_/                                   \n")
 PLS_IGNORE := $(shell >&2 printf "\e[0;34m          - When Epsiloff and Omegout          \e[0m\n")
 PLS_IGNORE := $(shell >&2 printf "\n")
-PLS_IGNORE := $(shell >&2 printf "\e[32mBuilding U$(UPSILON_VERSION)-E$(EPSILON_VERSION)\n")
+PLS_IGNORE := $(shell >&2 printf "\e[32mBuilding Gamma v$(GAMMA_VERSION) (U$(UPSILON_VERSION)-E$(EPSILON_VERSION))\n")
 
 ifeq (${PLATFORM},device)
   DISPLAY_TARGET = Numworks $(MODEL)

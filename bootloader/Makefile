@@ -48,3 +48,7 @@ bootloader_images = $(addprefix bootloader/, \
 bootloader_src += $(ion_src) $(simple_kandinsky_src) $(liba_src) $(libaxx_src) $(bootloader_images)
 
 $(eval $(call depends_on_image,bootloader/interface/static/interface.cpp,$(bootloader_images)))
+
+# messages.h embeds GAMMA_VERSION_STRING, so the bootloader must rebuild when
+# the computed version changes even though no source file was touched.
+$(call object_for,$(bootloader_src)): $(GAMMA_VERSION_FILE)

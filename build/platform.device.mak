@@ -1,4 +1,11 @@
-MODEL ?= bootloader
+ifeq ($(strip $(MODEL)),)
+  ifneq ($(filter release,$(MAKECMDGOALS)),)
+    $(error MODEL must be set explicitly for release builds)
+  endif
+  MODEL := bootloader
+  $(warning MODEL is not set; defaulting to bootloader. Set MODEL explicitly for reproducible builds.)
+endif
+
 USE_LIBA = 1
 EXE = elf
 

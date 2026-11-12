@@ -28,7 +28,7 @@ constexpr SettingsMessageTree s_codeChildren[4] = {SettingsMessageTree(I18n::Mes
 #endif
 constexpr SettingsMessageTree s_modelFontChildren[2] = {SettingsMessageTree(I18n::Message::LargeFont), SettingsMessageTree(I18n::Message::SmallFont)};
 
-constexpr SettingsMessageTree s_modelAboutChildren[10] = {SettingsMessageTree(I18n::Message::Username), SettingsMessageTree(I18n::Message::UpsilonVersion), SettingsMessageTree(I18n::Message::OmegaVersion), SettingsMessageTree(I18n::Message::SoftwareVersion), SettingsMessageTree(I18n::Message::MicroPythonVersion), SettingsMessageTree(I18n::Message::Battery), SettingsMessageTree(I18n::Message::MemUse), SettingsMessageTree(I18n::Message::SerialNumber), SettingsMessageTree(I18n::Message::FccId), SettingsMessageTree(I18n::Message::Contributors, s_contributorsChildren)};
+constexpr SettingsMessageTree s_modelAboutChildren[11] = {SettingsMessageTree(I18n::Message::Username), SettingsMessageTree(I18n::Message::GammaVersion), SettingsMessageTree(I18n::Message::UpsilonVersion), SettingsMessageTree(I18n::Message::OmegaVersion), SettingsMessageTree(I18n::Message::SoftwareVersion), SettingsMessageTree(I18n::Message::MicroPythonVersion), SettingsMessageTree(I18n::Message::Battery), SettingsMessageTree(I18n::Message::MemUse), SettingsMessageTree(I18n::Message::SerialNumber), SettingsMessageTree(I18n::Message::FccId), SettingsMessageTree(I18n::Message::Contributors, s_contributorsChildren)};
 
 MainController::MainController(Responder * parentResponder, InputEventHandlerDelegate * inputEventHandlerDelegate) :
   ViewController(parentResponder),

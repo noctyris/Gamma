@@ -15,6 +15,8 @@ public:
   const char * omegaVersion() const;
   const bool isUpsilon() const;
   const char * upsilonVersion() const;
+  const bool isGamma() const;
+  const char * gammaVersion() const;
   const void * storageAddress() const;
   const size_t storageSize() const;
   const bool hasUpsilonExtras() const;
@@ -28,6 +30,7 @@ private:
   constexpr static uint32_t OmegaMagic = 0xEFBEADDE;
   constexpr static uint32_t UpsilonMagic = 0x55707369;
   constexpr static uint32_t UpsilonExtraMagic = 0xaa7073ff;
+  constexpr static uint32_t GammaMagic = 0x47616d6d;
   uint32_t m_header;
   const char m_expectedEpsilonVersion[8];
   void * m_storageAddressRAM;
@@ -51,6 +54,9 @@ private:
   const void (*m_recoveryAddress)();
   uint32_t m_extraVersion;
   uint32_t m_upsilonExtraMagicFooter;
+  uint32_t m_gammaMagicHeader;
+  const char m_GammaVersion[16];
+  uint32_t m_gammaMagicFooter;
 };
 
 extern const UserlandHeader* s_userlandHeaderA;
