@@ -54,7 +54,9 @@ bool about_submenu() {
 
 const char * Bootloader::HomeMenu::getSlotOsText(Slot slot) {
   if (Slot::isFullyValid(slot)) {
-    if (slot.userlandHeader()->isOmega() && slot.userlandHeader()->isUpsilon()) {
+    if (slot.userlandHeader()->isGamma()) {
+      return Messages::gammaSlot;
+    } else if (slot.userlandHeader()->isOmega() && slot.userlandHeader()->isUpsilon()) {
       return Messages::upsilonSlot;
     } else if (slot.userlandHeader()->isOmega() && slot.kernelHeader()->patchLevel()[0] != '\0') {
       return Messages::omegaSlot;
@@ -85,7 +87,19 @@ const char * Bootloader::HomeMenu::getKernelText(Slot slot) {
 }
 
 const char * Bootloader::HomeMenu::getVersionText(Slot slot) {
-  return Slot::isFullyValid(slot) ? slot.userlandHeader()->isOmega() && slot.userlandHeader()->isUpsilon() ? slot.userlandHeader()->upsilonVersion() : slot.userlandHeader()->isOmega() ? slot.userlandHeader()->omegaVersion() : slot.kernelHeader()->version() : nullptr;
+  if (!Slot::isFullyValid(slot)) {
+    return nullptr;
+  }
+  if (slot.userlandHeader()->isGamma()) {
+    return slot.userlandHeader()->gammaVersion();
+  }
+  if (slot.userlandHeader()->isOmega() && slot.userlandHeader()->isUpsilon()) {
+    return slot.userlandHeader()->upsilonVersion();
+  }
+  if (slot.userlandHeader()->isOmega()) {
+    return slot.userlandHeader()->omegaVersion();
+  }
+  return slot.kernelHeader()->version();
 }
 
 void Bootloader::HomeMenu::setup() {

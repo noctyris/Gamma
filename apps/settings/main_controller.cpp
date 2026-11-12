@@ -97,8 +97,9 @@ constexpr SettingsMessageTree s_modelFontChildren[2] = {
     SettingsMessageTree(I18n::Message::LargeFont),
     SettingsMessageTree(I18n::Message::SmallFont)};
 
-constexpr SettingsMessageTree s_modelAboutChildren[10] = {
+constexpr SettingsMessageTree s_modelAboutChildren[11] = {
     SettingsMessageTree(I18n::Message::Username),
+    SettingsMessageTree(I18n::Message::GammaVersion),
     SettingsMessageTree(I18n::Message::UpsilonVersion),
     SettingsMessageTree(I18n::Message::OmegaVersion),
     SettingsMessageTree(I18n::Message::SoftwareVersion),

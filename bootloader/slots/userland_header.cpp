@@ -32,6 +32,14 @@ const char * UserlandHeader::upsilonVersion() const {
   return m_UpsilonVersion;
 }
 
+const bool UserlandHeader::isGamma() const {
+  return m_gammaMagicHeader == GammaMagic && m_gammaMagicFooter == GammaMagic;
+}
+
+const char * UserlandHeader::gammaVersion() const {
+  return m_GammaVersion;
+}
+
 const void * UserlandHeader::storageAddress() const {
   return m_storageAddressRAM;
 }

@@ -57,6 +57,7 @@ endif
 .PHONY: info
 info:
 	@echo "EPSILON_VERSION = $(EPSILON_VERSION)"
+	@echo "GAMMA_VERSION = $(GAMMA_VERSION)"
 	@echo "EPSILON_APPS = $(EPSILON_APPS)"
 	@echo "EPSILON_I18N = $(EPSILON_I18N)"
 	@echo "THEME_NAME = $(THEME_NAME)"

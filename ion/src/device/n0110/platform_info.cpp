@@ -17,6 +17,10 @@
 #error This file expects UPSILON_VERSION to be defined
 #endif
 
+#ifndef GAMMA_VERSION
+#error This file expects GAMMA_VERSION to be defined
+#endif
+
 #ifndef HEADER_SECTION
 #define HEADER_SECTION
 #endif
@@ -46,7 +50,10 @@ public:
     m_upsilonMagicHeader(UpsilonMagic),
     m_UpsilonVersion{UPSILON_VERSION},
     m_osType(OSType),
-    m_upsilonMagicFooter(UpsilonMagic) { }
+    m_upsilonMagicFooter(UpsilonMagic),
+    m_gammaMagicHeader(GammaMagic),
+    m_GammaVersion{GAMMA_VERSION},
+    m_gammaMagicFooter(GammaMagic) { }
   const char * version() const {
     assert(m_storageAddress != nullptr);
     assert(m_storageSize != 0);
@@ -64,6 +71,15 @@ public:
     assert(m_omegaMagicHeader == OmegaMagic);
     assert(m_omegaMagicFooter == OmegaMagic);
     return m_UpsilonVersion;
+  }
+  const char * gammaVersion() const {
+    assert(m_storageAddress != nullptr);
+    assert(m_storageSize != 0);
+    assert(m_header == Magic);
+    assert(m_footer == Magic);
+    assert(m_omegaMagicHeader == OmegaMagic);
+    assert(m_omegaMagicFooter == OmegaMagic);
+    return m_GammaVersion;
   }
   const char * omegaVersion() const {
     assert(m_storageAddress != nullptr);
@@ -99,6 +115,7 @@ private:
   constexpr static uint32_t Magic = 0xDEC00DF0;
   constexpr static uint32_t OmegaMagic = 0xEFBEADDE;
   constexpr static uint32_t UpsilonMagic = 0x55707369;
+  constexpr static uint32_t GammaMagic = 0x47616d6d;
   constexpr static uint32_t OSType = 0x79827178;
   uint32_t m_header;
   const char m_version[8];
@@ -114,6 +131,9 @@ private:
   const char m_UpsilonVersion[16];
   uint32_t m_osType;
   uint32_t m_upsilonMagicFooter;
+  uint32_t m_gammaMagicHeader;
+  const char m_GammaVersion[16];
+  uint32_t m_gammaMagicFooter;
 
 };
 
@@ -125,6 +145,10 @@ const char * Ion::softwareVersion() {
 
 const char * Ion::upsilonVersion() {
   return platform_infos.upsilonVersion();
+}
+
+const char * Ion::gammaVersion() {
+  return platform_infos.gammaVersion();
 }
 
 const char * Ion::omegaVersion() {

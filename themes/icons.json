@@ -6,6 +6,7 @@
     "apps/calculation/calculation_icon.png" : "apps/calculation_icon.png",
     "apps/code/code_icon.png" : "apps/code_icon.png",
     "apps/external/external_icon.png" : "apps/external_icon.png",
+    "apps/finance/finance_icon.png" : "apps/finance_icon.png",
     "apps/graph/graph_icon.png" : "apps/graph_icon.png",
     "apps/probability/probability_icon.png" : "apps/probability_icon.png",
     "apps/regression/regression_icon.png" : "apps/regression_icon.png",
