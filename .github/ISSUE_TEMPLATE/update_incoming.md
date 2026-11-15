@@ -2,7 +2,7 @@
 name: Update coming soon
 about: Track an update that is being prepared
 title: '[UPDATE]: '
-labels: 'enhancement'
+labels: 'status: triage, type: update'
 assignees: 'noctyris'
 
 ---

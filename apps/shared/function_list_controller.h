@@ -58,6 +58,7 @@ protected:
   KDCoordinate baseline(int j);
   void resetMemoizationForIndex(int index) override;
   void shiftMemoization(bool newCellIsUnder) override;
+  void didChangeModelsList() override;
   SelectableTableView m_selectableTableView;
 private:
   static constexpr KDCoordinate k_minTitleColumnWidth = 65;
@@ -65,7 +66,6 @@ private:
   TabViewController * tabController() const;
   InputViewController * inputController() override;
   KDCoordinate maxFunctionNameWidth();
-  void didChangeModelsList() override;
   virtual KDCoordinate privateBaseline(int j) const;
   KDCoordinate notMemoizedCumulatedHeightFromIndex(int j) override {
     return TableViewDataSource::cumulatedHeightFromIndex(j);

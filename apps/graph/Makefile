@@ -22,6 +22,7 @@ app_graph_src = $(addprefix apps/graph/,\
   graph/root_graph_controller.cpp \
   graph/tangent_graph_controller.cpp \
   list/domain_parameter_controller.cpp \
+  list/function_models_parameter_controller.cpp \
   list/list_controller.cpp \
   list/list_parameter_controller.cpp \
   list/text_field_function_title_cell.cpp \
@@ -41,7 +42,9 @@ i18n_files += $(call i18n_without_universal_for,graph/base)
 
 tests_src += $(addprefix apps/graph/test/,\
   caching.cpp \
+  equations.cpp \
   helper.cpp \
+  implicit.cpp \
   ranges.cpp \
 )
 

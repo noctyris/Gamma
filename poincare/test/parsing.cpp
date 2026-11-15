@@ -323,6 +323,61 @@ QUIZ_CASE(poincare_parsing_units) {
   assert_parsed_expression_is("3_s", Multiplication::Builder(BasedInteger::Builder(3), second));
 }
 
+QUIZ_CASE(poincare_parsing_units_without_underscore) {
+  Preferences * preferences = Preferences::sharedPreferences();
+  const bool previousUnitsWithoutUnderscore = preferences->unitsWithoutUnderscore();
+  const Unit meter = Unit::Builder(Unit::k_distanceRepresentatives + Unit::k_meterRepresentativeIndex, Unit::Prefix::EmptyPrefix());
+  const Unit second = Unit::Builder(Unit::k_timeRepresentatives + Unit::k_secondRepresentativeIndex, Unit::Prefix::EmptyPrefix());
+  const Unit kilogram = Unit::Builder(Unit::k_massRepresentatives, Unit::k_prefixes + Unit::k_kiloPrefixIndex);
+
+  // Without the preference, unit symbols still need a leading underscore.
+  preferences->setUnitsWithoutUnderscore(false);
+  assert_parsed_expression_is("3 m", Multiplication::Builder(BasedInteger::Builder(3), Symbol::Builder("m", 1)));
+  assert_parsed_expression_is("m", Symbol::Builder("m", 1));
+
+  /* With the preference, unit symbols can be written without the leading
+   * underscore, provided they are in an operand position. */
+  preferences->setUnitsWithoutUnderscore(true);
+  assert_parsed_expression_is("3 m", Multiplication::Builder(BasedInteger::Builder(3), meter));
+  assert_parsed_expression_is("3 s", Multiplication::Builder(BasedInteger::Builder(3), second));
+  assert_parsed_expression_is("m", meter);
+  assert_parsed_expression_is("kg", kilogram);
+  assert_parsed_expression_is("(1+2) m", Multiplication::Builder(Parenthesis::Builder(Addition::Builder(BasedInteger::Builder(1), BasedInteger::Builder(2))), meter));
+  assert_parsed_expression_is("3 m/s", Division::Builder(Multiplication::Builder(BasedInteger::Builder(3), meter), second));
+  assert_parsed_expression_is("3 m^2", Multiplication::Builder(BasedInteger::Builder(3), Power::Builder(meter, BasedInteger::Builder(2))));
+  // A product of units starts a new operand and simplifies to the derived unit.
+  assert_parsed_expression_simplify_to("kg×m/(s^2)", "1×_N");
+  assert_parsed_expression_is("m+1", Addition::Builder(meter, BasedInteger::Builder(1)));
+  // Store targets and function parameters are not parsed as units.
+  assert_parsed_expression_is("1→m", Store::Builder(BasedInteger::Builder(1), Symbol::Builder("m", 1)));
+  assert_parsed_expression_is("1→f(t)", Store::Builder(BasedInteger::Builder(1), Function::Builder("f", 1, Symbol::Builder("t", 1))));
+  // The unit is displayed without the underscore when the preference is set.
+  assert_layout_serialize_to(meter.createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "m");
+  /* A value and a unit are displayed with a space in between, which is more
+   * readable. This space is not stored in the expression (which serializes as
+   * "1×_m") and is ignored when the layout is parsed back. */
+  const Expression oneMeter = parse_expression("1 m", nullptr, false);
+  const Layout oneMeterLayout = oneMeter.createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits);
+  assert_layout_serialize_to(oneMeterLayout, "1 m");
+  char parsingBuffer[256];
+  oneMeterLayout.serializeForParsing(parsingBuffer, 256);
+  assert_parsed_expression_is(parsingBuffer, Multiplication::Builder(BasedInteger::Builder(1), meter));
+  /* A product of units keeps the middle dot so that m·m is not read as mm. */
+  assert_layout_serialize_to(parse_expression("m×m", nullptr, false).createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "m·m");
+  assert_expression_serialize_to(oneMeter, "1×_m", DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits);
+  /* Juxtaposed units form a product: kgm is kg×m and not the symbol "kgm". */
+  assert_parsed_expression_is("kgm", Multiplication::Builder(kilogram, meter));
+  assert_layout_serialize_to(parse_expression("kgm", nullptr, false).createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "kg·m");
+  /* The longest unit is always preferred: ms is the millisecond, not m×s. */
+  assert_layout_serialize_to(parse_expression("ms", nullptr, false).createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "ms");
+  /* An identifier that cannot be split entirely into units stays a symbol. */
+  assert_parsed_expression_is("kgmz", Symbol::Builder("kgmz", 4));
+
+  preferences->setUnitsWithoutUnderscore(previousUnitsWithoutUnderscore);
+  // Serialization keeps the underscore so that the unit can be parsed back.
+  assert_layout_serialize_to(meter.createLayout(DecimalMode, PrintFloat::k_numberOfStoredSignificantDigits), "_m");
+}
+
 QUIZ_CASE(poincare_parsing_identifiers) {
   // User-defined symbols
   assert_parsed_expression_is("a", Symbol::Builder("a", 1));

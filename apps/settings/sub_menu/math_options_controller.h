@@ -12,12 +12,15 @@ class MathOptionsController : public GenericSubController {
 public:
   MathOptionsController(Responder * parentResponder, InputEventHandlerDelegate * inputEventHandlerDelegate);
   bool handleEvent(Ion::Events::Event event) override;
+  int typeAtLocation(int i, int j) override;
   HighlightCell * reusableCell(int index, int type) override;
   int reusableCellCount(int type) override;
   void willDisplayCellForIndex(HighlightCell * cell, int index) override;
 private:
-  constexpr static int k_totalNumberOfCell = 7;
-  MessageTableCellWithChevronAndMessage m_cells[k_totalNumberOfCell];
+  constexpr static int k_numberOfSimpleChevronCells = 6;
+  constexpr static int k_unitsWithoutUnderscoreCellType = 1;
+  MessageTableCellWithChevronAndMessage m_cells[k_numberOfSimpleChevronCells];
+  MessageTableCellWithSwitch m_unitsWithoutUnderscoreCell;
   PreferencesController m_preferencesController;
   DisplayModeController m_displayModeController;
 };

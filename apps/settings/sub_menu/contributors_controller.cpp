@@ -28,10 +28,10 @@ int ContributorsController::reusableCellCount(int type) {
 }
 
 constexpr static int s_numberOfDevelopers = 19;
-constexpr static int s_numberOfGammaDeeloppers = 1;
 constexpr static int s_numberOfUpsilonDevelopers = 5;
+constexpr static int s_numberOfGammaDevelopers = 1;
 constexpr static I18n::Message s_developersUsernames[s_numberOfDevelopers] = {
-    I18n::Message::HoelJamier,       I18n::Message::PLaurianFournier,
+    I18n::Message::PHoelJamier,      I18n::Message::PLaurianFournier,
     I18n::Message::PYannCouturier,   I18n::Message::PDavidLuca,
     I18n::Message::PLoicE,           I18n::Message::PVictorKretz,
     I18n::Message::PQuentinGuidee,   I18n::Message::PJoachimLeFournis,
@@ -47,9 +47,9 @@ void ContributorsController::willDisplayCellForIndex(HighlightCell *cell,
                                                      int index) {
   MessageTableCellWithBuffer *myTextCell = (MessageTableCellWithBuffer *)cell;
   myTextCell->setAccessoryText(I18n::translate(s_developersUsernames[index]));
-  if (index < s_numberOfGammaDeeloppers) {
+  if (index < s_numberOfGammaDevelopers) {
     myTextCell->setTextColor(KDColor::RGB24(0xd4af37));
-  } else if (index < s_numberOfGammaDeeloppers + s_numberOfUpsilonDevelopers) {
+  } else if (index < s_numberOfGammaDevelopers + s_numberOfUpsilonDevelopers) {
     myTextCell->setTextColor(KDColor::RGB24(0x5e81ac));
   } else {
     myTextCell->setTextColor(KDColor::RGB24(0xc53431));

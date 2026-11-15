@@ -1,5 +1,6 @@
 #include "parser.h"
 #include <ion/unicode/utf8_decoder.h>
+#include <poincare/preferences.h>
 #include <utility>
 #include <algorithm>
 #include <stdlib.h>
@@ -97,6 +98,10 @@ Expression Parser::parseUntil(Token::Type stoppingType) {
 }
 
 void Parser::popToken() {
+  /* Keep track of the type of the token being consumed: it is used to decide
+   * whether an identifier is in an operand position (and may thus be a unit
+   * written without a leading underscore). */
+  m_previousTokenType = m_currentToken.type();
   if (m_pendingImplicitMultiplication) {
     m_currentToken = Token(Token::ImplicitTimes);
     m_pendingImplicitMultiplication = false;
@@ -358,6 +363,34 @@ void Parser::parseConstant(Expression & leftHandSide, Token::Type stoppingType) 
   isThereImplicitMultiplication();
 }
 
+/* Length of the longest unit symbol (prefix + unit) matching the beginning of
+ * the text, 0 if none matches. The longest match is always preferred, so that
+ * "kW" is not read as "k" followed by "W". */
+static size_t LongestUnitSymbolLength(const char * text, size_t length, const Unit::Representative * * representative, const Unit::Prefix * * prefix) {
+  for (size_t candidateLength = length; candidateLength > 0; candidateLength--) {
+    if (Unit::CanParse(text, candidateLength, representative, prefix)) {
+      return candidateLength;
+    }
+  }
+  return 0;
+}
+
+/* A unit symbol can be a single unit (m) or several juxtaposed units (kgm,
+ * kWh). The whole text must be covered by unit symbols. */
+static bool IsUnitSymbolSequence(const char * text, size_t length) {
+  size_t parsedLength = 0;
+  while (parsedLength < length) {
+    const Unit::Representative * representative = nullptr;
+    const Unit::Prefix * prefix = nullptr;
+    const size_t unitLength = LongestUnitSymbolLength(text + parsedLength, length - parsedLength, &representative, &prefix);
+    if (unitLength == 0) {
+      return false;
+    }
+    parsedLength += unitLength;
+  }
+  return true;
+}
+
 void Parser::parseUnit(Expression & leftHandSide, Token::Type stoppingType) {
   assert(leftHandSide.isUninitialized());
   const Unit::Representative * unitRepresentative = nullptr;
@@ -370,6 +403,35 @@ void Parser::parseUnit(Expression & leftHandSide, Token::Type stoppingType) {
     return;
   }
   isThereImplicitMultiplication();
+}
+
+void Parser::parseUnitSequence(Expression & leftHandSide) {
+  assert(leftHandSide.isUninitialized());
+  /* Juxtaposed unit symbols are multiplied: "kgm" is kg×m. */
+  const char * text = m_currentToken.text();
+  const size_t length = m_currentToken.length();
+  leftHandSide = Constant::Builder(m_currentToken.codePoint());
+  size_t parsedLength = 0;
+  bool firstUnit = true;
+  while (parsedLength < length) {
+    const Unit::Representative * unitRepresentative = nullptr;
+    const Unit::Prefix * unitPrefix = nullptr;
+    const size_t unitLength = LongestUnitSymbolLength(text + parsedLength, length - parsedLength, &unitRepresentative, &unitPrefix);
+    if (unitLength == 0) {
+      m_status = Status::Error; // Unit does not exist
+      return;
+    }
+    Expression unit = Unit::Builder(unitRepresentative, unitPrefix);
+    if (firstUnit) {
+      leftHandSide = unit;
+      firstUnit = false;
+    } else if (leftHandSide.type() == ExpressionNode::Type::Multiplication) {
+      static_cast<Multiplication &>(leftHandSide).addChildAtIndexInPlace(unit, leftHandSide.numberOfChildren(), leftHandSide.numberOfChildren());
+    } else {
+      leftHandSide = Multiplication::Builder(leftHandSide, unit);
+    }
+    parsedLength += unitLength;
+  }
 }
 
 void Parser::parseReservedFunction(Expression & leftHandSide, const Expression::FunctionHelper * const * functionHelper) {
@@ -493,7 +555,12 @@ void Parser::parseCustomIdentifier(Expression & leftHandSide, const char * name,
     }
     poppedParenthesisIsSystem = true;
   }
+  /* Parameters of a user-defined function are symbols: they do not denote the
+   * unit of the same name (f(t) and not f(tonne)). */
+  const bool identifiersWereFunctionParameters = m_identifiersAreFunctionParameters;
+  m_identifiersAreFunctionParameters = true;
   Expression parameter = parseCommaSeparatedList();
+  m_identifiersAreFunctionParameters = identifiersWereFunctionParameters;
   if (m_status != Status::Progress) {
     return;
   }
@@ -518,14 +585,59 @@ void Parser::parseCustomIdentifier(Expression & leftHandSide, const char * name,
 void Parser::parseIdentifier(Expression & leftHandSide, Token::Type stoppingType) {
   assert(leftHandSide.isUninitialized());
   const Expression::FunctionHelper * const * functionHelper = GetReservedFunction(m_currentToken.text(), m_currentToken.length());
-  if (functionHelper != nullptr) {
+  /* A single unit symbol can shadow a reserved function, but a sequence of
+   * units (as in "tan" or "sin") never does. */
+  const bool isUnitSymbolWithoutUnderscore = currentTokenCanBeParsedAsUnitWithoutUnderscore(false);
+  const bool isUnitWithoutUnderscore = isUnitSymbolWithoutUnderscore || currentTokenCanBeParsedAsUnitWithoutUnderscore(true);
+  /* A reserved function is only shadowed by a unit when it cannot be a function
+   * call, ie when it is not followed by a parenthesis. This way, a unit whose
+   * symbol is also a function name stays a function call when it is one. */
+  const bool isFunctionCall = m_nextToken.is(Token::LeftParenthesis) || m_nextToken.is(Token::LeftSystemParenthesis);
+  if (functionHelper != nullptr && !(isUnitSymbolWithoutUnderscore && !isFunctionCall)) {
     parseReservedFunction(leftHandSide, functionHelper);
   } else if (IsSpecialIdentifierName(m_currentToken.text(), m_currentToken.length())) {
     parseSpecialIdentifier(leftHandSide);
+  } else if (isUnitSymbolWithoutUnderscore) {
+    parseUnit(leftHandSide, stoppingType);
+  } else if (isUnitWithoutUnderscore) {
+    parseUnitSequence(leftHandSide);
   } else {
     parseCustomIdentifier(leftHandSide, m_currentToken.text(), m_currentToken.length());
   }
   isThereImplicitMultiplication();
+}
+
+bool Parser::currentTokenCanBeParsedAsUnitWithoutUnderscore(bool allowUnitSequence) const {
+  if (!Preferences::sharedPreferences()->unitsWithoutUnderscore() || m_identifiersAreFunctionParameters) {
+    return false;
+  }
+  /* Units written without a leading underscore are only recognized in an
+   * operand position: at the beginning of the expression, after a value, an
+   * opening parenthesis, a comma or a multiplication, division or power
+   * operator. Store targets (1→m) and the parameters of a user-defined
+   * function (1→f(t)=t^2) are thus left untouched. */
+  const bool isOperandPosition = m_previousTokenType == Token::Undefined ||
+                                 m_previousTokenType == Token::ImplicitTimes ||
+                                 m_previousTokenType == Token::Times ||
+                                 m_previousTokenType == Token::Slash ||
+                                 m_previousTokenType == Token::Caret ||
+                                 m_previousTokenType == Token::LeftParenthesis ||
+                                 m_previousTokenType == Token::LeftSystemParenthesis ||
+                                 m_previousTokenType == Token::LeftBracket ||
+                                 m_previousTokenType == Token::Comma;
+  if (!isOperandPosition) {
+    return false;
+  }
+  const Unit::Representative * representative = nullptr;
+  const Unit::Prefix * prefix = nullptr;
+  const bool isSingleUnit = Unit::CanParse(m_currentToken.text(), m_currentToken.length(), &representative, &prefix);
+  if (!isSingleUnit && !(allowUnitSequence && IsUnitSymbolSequence(m_currentToken.text(), m_currentToken.length()))) {
+    return false;
+  }
+  /* An existing variable or function takes precedence over the unit: a symbol
+   * named "m" is not shadowed by the meter unit. */
+  return m_context == nullptr ||
+         m_context->expressionTypeForIdentifier(m_currentToken.text(), m_currentToken.length()) == Context::SymbolAbstractType::None;
 }
 
 Expression Parser::parseFunctionParameters() {

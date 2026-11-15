@@ -41,7 +41,7 @@ constexpr SettingsMessageTree s_symbolFunctionChildren[3] = {
     SettingsMessageTree(I18n::Message::SymbolDefaultFunction),
     SettingsMessageTree(I18n::Message::SymbolArgDefaultFunction),
     SettingsMessageTree(I18n::Message::SymbolArgFunction)};
-constexpr SettingsMessageTree s_modelMathOptionsChildren[6] = {
+constexpr SettingsMessageTree s_modelMathOptionsChildren[7] = {
     SettingsMessageTree(I18n::Message::AngleUnit, s_modelAngleChildren),
     SettingsMessageTree(I18n::Message::DisplayMode,
                         s_modelFloatDisplayModeChildren),
@@ -50,7 +50,8 @@ constexpr SettingsMessageTree s_modelMathOptionsChildren[6] = {
                         s_symbolFunctionChildren),
     SettingsMessageTree(I18n::Message::ComplexFormat,
                         s_modelComplexFormatChildren),
-    SettingsMessageTree(I18n::Message::SymbolMultiplication, s_symbolChildren)};
+    SettingsMessageTree(I18n::Message::SymbolMultiplication, s_symbolChildren),
+    SettingsMessageTree(I18n::Message::UnitsWithoutUnderscore)};
 constexpr SettingsMessageTree s_brightnessChildren[4] = {
     SettingsMessageTree(I18n::Message::Brightness),
     SettingsMessageTree(I18n::Message::IdleTimeBeforeDimming),

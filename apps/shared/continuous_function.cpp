@@ -2,23 +2,106 @@
 #include "poincare_helpers.h"
 #include <apps/constant.h>
 #include <poincare/derivative.h>
+#include <poincare/float.h>
+#include <poincare/integer.h>
+#include <poincare/horizontal_layout.h>
 #include <poincare/integral.h>
+#include <poincare/layout_helper.h>
 #include <poincare/matrix.h>
 #include <poincare/multiplication.h>
 #include <poincare/rational.h>
 #include <poincare/serialization_helper.h>
 #include <poincare/trigonometry.h>
+#include <poincare/undefined.h>
 #include <escher/palette.h>
 #include <ion/unicode/utf8_helper.h>
 #include <ion/unicode/utf8_decoder.h>
 #include <apps/i18n.h>
 #include <float.h>
 #include <cmath>
+#include <string.h>
 #include <algorithm>
 
 using namespace Poincare;
 
 namespace Shared {
+
+namespace {
+
+bool FindTopLevelInequality(const char * text, int * position,
+                            int * operatorLength,
+                            ContinuousFunction::Inequality * kind) {
+  int parenthesisDepth = 0;
+  int bracketDepth = 0;
+  int braceDepth = 0;
+  for (int i = 0; text[i] != 0; i++) {
+    char c = text[i];
+    if (c == '(') {
+      parenthesisDepth++;
+      continue;
+    }
+    if (c == ')') {
+      parenthesisDepth--;
+      continue;
+    }
+    if (c == '[') {
+      bracketDepth++;
+      continue;
+    }
+    if (c == ']') {
+      bracketDepth--;
+      continue;
+    }
+    if (c == '{') {
+      braceDepth++;
+      continue;
+    }
+    if (c == '}') {
+      braceDepth--;
+      continue;
+    }
+    if (parenthesisDepth != 0 || bracketDepth != 0 || braceDepth != 0) {
+      continue;
+    }
+    if (c == '<' || c == '>') {
+      bool equal = text[i + 1] == '=';
+      *operatorLength = equal ? 2 : 1;
+      *position = i;
+      if (c == '<') {
+        *kind = equal ? ContinuousFunction::Inequality::InferiorEqual
+                      : ContinuousFunction::Inequality::Inferior;
+      } else {
+        *kind = equal ? ContinuousFunction::Inequality::SuperiorEqual
+                      : ContinuousFunction::Inequality::Superior;
+      }
+      return true;
+    }
+    if (static_cast<unsigned char>(c) == 0xE2 &&
+        static_cast<unsigned char>(text[i + 1]) == 0x89 &&
+        (static_cast<unsigned char>(text[i + 2]) == 0xA4 ||
+         static_cast<unsigned char>(text[i + 2]) == 0xA5)) {
+      *position = i;
+      *operatorLength = 3;
+      *kind = static_cast<unsigned char>(text[i + 2]) == 0xA4
+                  ? ContinuousFunction::Inequality::InferiorEqual
+                  : ContinuousFunction::Inequality::SuperiorEqual;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IsEmptyText(const char * text) {
+  if (!text) {
+    return true;
+  }
+  while (*text == ' ' || *text == '\t' || *text == '\n' || *text == '\r') {
+    text++;
+  }
+  return *text == 0;
+}
+
+}  // namespace
 
 void ContinuousFunction::DefaultName(char buffer[], size_t bufferSize) {
   constexpr int k_maxNumberOfDefaultLetterNames = 4;
@@ -49,6 +132,19 @@ void ContinuousFunction::DefaultName(char buffer[], size_t bufferSize) {
     currentNumber++;
   }
   assert(currentNumberLength >= 0 && currentNumberLength < availableBufferSize);
+}
+
+void ContinuousFunction::DefaultPolarName(char buffer[], size_t bufferSize) {
+  buffer[0] = 'r';
+  for (int number = 1; number < 100; number++) {
+    int length = 1 + Poincare::Integer(number).serialize(buffer + 1,
+                                                         bufferSize - 1);
+    if (GlobalContext::SymbolAbstractNameIsFree(buffer)) {
+      return;
+    }
+    (void)length;
+  }
+  DefaultName(buffer, bufferSize);
 }
 
 ContinuousFunction ContinuousFunction::NewModel(Ion::Storage::Record::ErrorStatus * error, const char * baseName) {
@@ -86,6 +182,11 @@ int ContinuousFunction::derivativeNameWithArgument(char * buffer, size_t bufferS
 }
 
 Poincare::Expression ContinuousFunction::expressionReduced(Poincare::Context * context) const {
+  if (isRawContent()) {
+    /* Piecewise and scatter plots are parsed by the application layer. Their
+     * storage is not a Poincare tree. */
+    return Undefined::Builder();
+  }
   Poincare::Expression result = ExpressionModelHandle::expressionReduced(context);
   if (plotType() == PlotType::Parametric && (
       result.type() != Poincare::ExpressionNode::Type::Matrix ||
@@ -97,6 +198,75 @@ Poincare::Expression ContinuousFunction::expressionReduced(Poincare::Context * c
   return result;
 }
 
+Poincare::Expression ContinuousFunction::expressionClone() const {
+  if (isRawContent()) {
+    return Poincare::Expression();
+  }
+  return ExpressionModelHandle::expressionClone();
+}
+
+void ContinuousFunction::text(char * buffer, size_t bufferSize) const {
+  if (isRawContent()) {
+    strlcpy(buffer, rawContent(), bufferSize);
+    return;
+  }
+  if (plotType() == PlotType::Parametric) {
+    Expression e = expressionClone();
+    if (!e.isUninitialized() &&
+        e.type() == ExpressionNode::Type::Matrix &&
+        static_cast<Matrix &>(e).numberOfRows() == 2 &&
+        static_cast<Matrix &>(e).numberOfColumns() == 1) {
+      e = e.replaceSymbolWithExpression(Symbol::Builder(UCodePointUnknown),
+                                        Symbol::Builder(symbol()));
+      int written = 0;
+      if (bufferSize > 0) {
+        buffer[written++] = '(';
+      }
+      written += e.childAtIndex(0).serialize(buffer + written,
+                                             bufferSize - written);
+      if (written < static_cast<int>(bufferSize) - 1) {
+        buffer[written++] = ',';
+      }
+      written += e.childAtIndex(1).serialize(buffer + written,
+                                             bufferSize - written);
+      if (written < static_cast<int>(bufferSize) - 1) {
+        buffer[written++] = ')';
+        buffer[written] = 0;
+      }
+      return;
+    }
+  }
+  ExpressionModelHandle::text(buffer, bufferSize);
+}
+
+Poincare::Layout ContinuousFunction::layout() {
+  if (isRawContent()) {
+    const char * source = rawContent();
+    return Poincare::LayoutHelper::String(source, strlen(source));
+  }
+  if (plotType() == PlotType::Parametric) {
+    Expression e = expressionClone();
+    if (!e.isUninitialized() &&
+        e.type() == ExpressionNode::Type::Matrix &&
+        static_cast<Matrix &>(e).numberOfRows() == 2 &&
+        static_cast<Matrix &>(e).numberOfColumns() == 1) {
+      e = e.replaceSymbolWithExpression(Symbol::Builder(UCodePointUnknown),
+                                        Symbol::Builder(symbol()));
+      Layout first = PoincareHelpers::CreateLayout(e.childAtIndex(0));
+      Layout second = PoincareHelpers::CreateLayout(e.childAtIndex(1));
+      Layout comma = LayoutHelper::String(",", 1);
+      Layout tuple = HorizontalLayout::Builder(first, comma, second);
+      return LayoutHelper::Parentheses(tuple, true);
+    }
+  }
+  return ExpressionModelHandle::layout();
+}
+
+void ContinuousFunction::tidy() {
+  m_piecewise.reset();
+  ExpressionModelHandle::tidy();
+}
+
 I18n::Message ContinuousFunction::parameterMessageName() const {
   return ParameterMessageForPlotType(plotType());
 }
@@ -104,6 +274,8 @@ I18n::Message ContinuousFunction::parameterMessageName() const {
 CodePoint ContinuousFunction::symbol() const {
   switch (plotType()) {
   case PlotType::Cartesian:
+  case PlotType::Implicit:
+  case PlotType::Scatter:
     return 'x';
   case PlotType::Polar:
     return UCodePointGreekSmallLetterTheta;
@@ -114,18 +286,55 @@ CodePoint ContinuousFunction::symbol() const {
 }
 
 ContinuousFunction::PlotType ContinuousFunction::plotType() const {
-  return recordData()->plotType();
+  return (PlotType)(static_cast<uint8_t>(recordData()->plotType()) & 0x0F);
+}
+
+ContinuousFunction::Inequality ContinuousFunction::inequality() const {
+  return (Inequality)(static_cast<uint8_t>(recordData()->plotType()) >> 4);
+}
+
+void ContinuousFunction::setInequality(Inequality inequality) {
+  recordData()->setInequality(inequality);
+  setCache(nullptr);
+  m_piecewise.reset();
+  m_model.tidy();
 }
 
 void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences::AngleUnit angleUnit, Context * context) {
   PlotType currentPlotType = plotType();
-  if (newPlotType == currentPlotType) {
+  if (newPlotType == currentPlotType || isRawContent()) {
+    return;
+  }
+  if (newPlotType == PlotType::Scatter) {
+    recordData()->setInequality(Inequality::None);
+    recordData()->setPlotType(PlotType::Scatter);
+    setCache(nullptr);
+    m_model.tidy();
+    m_piecewise.reset();
+    return;
+  }
+  if (currentPlotType == PlotType::Implicit || currentPlotType == PlotType::Scatter) {
+    /* These models have no parameter to convert to another curve type. */
+    return;
+  }
+  if (newPlotType == PlotType::Implicit) {
+    recordData()->setInequality(Inequality::None);
+    recordData()->setPlotType(newPlotType);
+    setCache(nullptr);
+    m_model.tidy();
+    m_piecewise.reset();
+    setTMin(-INFINITY);
+    setTMax(INFINITY);
     return;
   }
 
+  /* Changing the curve type discards any inequality: the new curve has its own
+   * parameter, so an inequality on the old expression would be meaningless. */
+  recordData()->setInequality(Inequality::None);
   recordData()->setPlotType(newPlotType);
 
   setCache(nullptr);
+  m_piecewise.reset();
 
   // Recompute the layouts
   m_model.tidy();
@@ -174,7 +383,8 @@ void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences
 }
 
 I18n::Message ContinuousFunction::ParameterMessageForPlotType(PlotType plotType) {
-  if (plotType == PlotType::Cartesian) {
+  if (plotType == PlotType::Cartesian || plotType == PlotType::Implicit ||
+      plotType == PlotType::Scatter) {
     return I18n::Message::X;
   }
   if (plotType == PlotType::Polar) {
@@ -184,11 +394,37 @@ I18n::Message ContinuousFunction::ParameterMessageForPlotType(PlotType plotType)
   return I18n::Message::T;
 }
 
+int ContinuousFunction::numberOfPoints() const {
+  return isScatterPlot() ? FunctionEquation::NumberOfPoints(rawContent()) : 0;
+}
+
+bool ContinuousFunction::pointAtIndex(int index,
+                                      Poincare::Coordinate2D<double> * point,
+                                      Poincare::Context * context) const {
+  if (!isScatterPlot()) {
+    return false;
+  }
+  FunctionEquation::Point2D parsedPoint;
+  if (!FunctionEquation::PointAtIndex(rawContent(), index, &parsedPoint,
+                                      context)) {
+    return false;
+  }
+  *point = Poincare::Coordinate2D<double>(parsedPoint.x, parsedPoint.y);
+  return true;
+}
+
 template <typename T>
 Poincare::Coordinate2D<T> ContinuousFunction::privateEvaluateXYAtParameter(T t, Poincare::Context * context) const {
+  if (isScatter()) {
+    return Coordinate2D<T>(NAN, NAN);
+  }
+  if (isPiecewise()) {
+    double y = piecewise(context).evaluate((double)t, context);
+    return Coordinate2D<T>(t, static_cast<T>(y));
+  }
   Coordinate2D<T> x1x2 = templatedApproximateAtParameter(t, context);
   PlotType type = plotType();
-  if (type == PlotType::Cartesian || type == PlotType::Parametric) {
+  if (type == PlotType::Cartesian || type == PlotType::Parametric || type == PlotType::Implicit) {
     return x1x2;
   }
   assert(type == PlotType::Polar);
@@ -215,7 +451,7 @@ void ContinuousFunction::setDisplayDerivative(bool display) {
 
 int ContinuousFunction::printValue(double cursorT, double cursorX, double cursorY, char * buffer, int bufferSize, int precision, Poincare::Context * context) {
   PlotType type = plotType();
-  if (type == PlotType::Cartesian) {
+  if (type == PlotType::Cartesian || type == PlotType::Scatter) {
     return Function::printValue(cursorT, cursorX, cursorY, buffer, bufferSize, precision, context);
   }
   if (type == PlotType::Polar) {
@@ -232,8 +468,10 @@ int ContinuousFunction::printValue(double cursorT, double cursorX, double cursor
 }
 
 double ContinuousFunction::approximateDerivative(double x, Poincare::Context * context) const {
-  assert(plotType() == PlotType::Cartesian);
-  if (x < tMin() || x > tMax()) {
+  if (isPiecewise() || isScatter()) {
+    return NAN;
+  }
+  if (plotType() != PlotType::Cartesian || x < tMin() || x > tMax()) {
     return NAN;
   }
   Poincare::Derivative derivative = Poincare::Derivative::Builder(expressionReduced(context).clone(), Symbol::Builder(UCodePointUnknown), Poincare::Float<double>::Builder(x)); // derivative takes ownership of Poincare::Float<double>::Builder(x) and the clone of expression
@@ -262,6 +500,70 @@ void ContinuousFunction::setTMax(float tMax) {
 }
 
 void ContinuousFunction::rangeForDisplay(float * xMin, float * xMax, float * yMin, float * yMax, float targetRatio, Poincare::Context * context) const {
+  if (isScatterPlot()) {
+    float minX = INFINITY;
+    float maxX = -INFINITY;
+    float minY = INFINITY;
+    float maxY = -INFINITY;
+    int points = numberOfPoints();
+    for (int i = 0; i < points; i++) {
+      Coordinate2D<double> point;
+      if (pointAtIndex(i, &point, context)) {
+        minX = std::min(minX, static_cast<float>(point.x1()));
+        maxX = std::max(maxX, static_cast<float>(point.x1()));
+        minY = std::min(minY, static_cast<float>(point.x2()));
+        maxY = std::max(maxY, static_cast<float>(point.x2()));
+      }
+    }
+    if (!std::isfinite(minX) || !std::isfinite(minY)) {
+      *xMin = -10.0f;
+      *xMax = 10.0f;
+      *yMin = -10.0f;
+      *yMax = 10.0f;
+      return;
+    }
+    float xMargin = std::max(1.0f, (maxX - minX) * 0.15f);
+    float yMargin = std::max(1.0f, (maxY - minY) * 0.15f);
+    *xMin = minX - xMargin;
+    *xMax = maxX + xMargin;
+    *yMin = minY - yMargin;
+    *yMax = maxY + yMargin;
+    return;
+  }
+  if (isPiecewise()) {
+    constexpr int k_numberOfSamples = 200;
+    constexpr float k_halfRange = 10.0f;
+    float minY = INFINITY;
+    float maxY = -INFINITY;
+    for (int i = 0; i <= k_numberOfSamples; i++) {
+      float x = -k_halfRange + (2.0f * k_halfRange * i) / k_numberOfSamples;
+      double y = piecewise(context).evaluate(x, context);
+      if (std::isfinite(y)) {
+        minY = std::min(minY, static_cast<float>(y));
+        maxY = std::max(maxY, static_cast<float>(y));
+      }
+    }
+    *xMin = -k_halfRange;
+    *xMax = k_halfRange;
+    if (std::isfinite(minY) && std::isfinite(maxY)) {
+      float margin = std::max(1.0f, (maxY - minY) * 0.15f);
+      *yMin = minY - margin;
+      *yMax = maxY + margin;
+    } else {
+      *yMin = -k_halfRange;
+      *yMax = k_halfRange;
+    }
+    return;
+  }
+  if (plotType() == PlotType::Implicit) {
+    /* Implicit curves are evaluated on a grid, so their extent cannot be
+     * derived from a parameter range. Use a sensible default window. */
+    *xMin = -10.0f;
+    *xMax = 10.0f;
+    *yMin = -10.0f;
+    *yMax = 10.0f;
+    return;
+  }
   if (plotType() != PlotType::Cartesian) {
     assert(std::isfinite(tMin()) && std::isfinite(tMax()) && std::isfinite(rangeStep()) && rangeStep() > 0);
     protectedFullRangeForDisplay(tMin(), tMax(), rangeStep(), xMin, xMax, context, true);
@@ -339,6 +641,12 @@ ContinuousFunction::RecordDataBuffer * ContinuousFunction::recordData() const {
 
 template<typename T>
 Coordinate2D<T> ContinuousFunction::templatedApproximateAtParameter(T t, Poincare::Context * context) const {
+  if (isScatter()) {
+    return Coordinate2D<T>(NAN, NAN);
+  }
+  if (isPiecewise()) {
+    return Coordinate2D<T>(t, static_cast<T>(piecewise(context).evaluate((double)t, context)));
+  }
   if (t < tMin() || t > tMax()) {
     return Coordinate2D<T>(plotType() == PlotType::Cartesian ? t : NAN, NAN);
   }
@@ -346,6 +654,11 @@ Coordinate2D<T> ContinuousFunction::templatedApproximateAtParameter(T t, Poincar
   char unknown[bufferSize];
   Poincare::SerializationHelper::CodePoint(unknown, bufferSize, UCodePointUnknown);
   PlotType type = plotType();
+  if (type == PlotType::Implicit) {
+    /* An implicit curve is evaluated on a two-dimensional grid by
+     * evaluateImplicitAt, not with a single parameter. */
+    return Coordinate2D<T>(t, NAN);
+  }
   Expression e = expressionReduced(context);
   if (type != PlotType::Parametric) {
     assert(type == PlotType::Cartesian || type == PlotType::Polar);
@@ -360,19 +673,30 @@ Coordinate2D<T> ContinuousFunction::templatedApproximateAtParameter(T t, Poincar
 }
 
 Coordinate2D<double> ContinuousFunction::nextMinimumFrom(double start, double step, double max, Context * context) const {
+  if (isPiecewise() || isScatter()) {
+    return Coordinate2D<double>(NAN, NAN);
+  }
   return nextPointOfInterestFrom(start, step, max, context, [](Expression e, char * symbol, double start, double step, double max, Context * context) { return PoincareHelpers::NextMinimum(e, symbol, start, step, max, context); });
 }
 
 Coordinate2D<double> ContinuousFunction::nextMaximumFrom(double start, double step, double max, Context * context) const {
+  if (isPiecewise() || isScatter()) {
+    return Coordinate2D<double>(NAN, NAN);
+  }
   return nextPointOfInterestFrom(start, step, max, context, [](Expression e, char * symbol, double start, double step, double max, Context * context) { return PoincareHelpers::NextMaximum(e, symbol, start, step, max, context); });
 }
 
 Coordinate2D<double> ContinuousFunction::nextRootFrom(double start, double step, double max, Context * context) const {
+  if (isPiecewise() || isScatter()) {
+    return Coordinate2D<double>(NAN, NAN);
+  }
   return nextPointOfInterestFrom(start, step, max, context, [](Expression e, char * symbol, double start, double step, double max, Context * context) { return Coordinate2D<double>(PoincareHelpers::NextRoot(e, symbol, start, step, max, context), 0.0); });
 }
 
 Coordinate2D<double> ContinuousFunction::nextIntersectionFrom(double start, double step, double max, Poincare::Context * context, Poincare::Expression e, double eDomainMin, double eDomainMax) const {
-  assert(plotType() == PlotType::Cartesian);
+  if (isPiecewise() || isScatter() || plotType() != PlotType::Cartesian) {
+    return Coordinate2D<double>(NAN, NAN);
+  }
   constexpr int bufferSize = CodePoint::MaxCodePointCharLength + 1;
   char unknownX[bufferSize];
   SerializationHelper::CodePoint(unknownX, bufferSize, UCodePointUnknown);
@@ -389,7 +713,7 @@ Coordinate2D<double> ContinuousFunction::nextIntersectionFrom(double start, doub
 }
 
 Coordinate2D<double> ContinuousFunction::nextPointOfInterestFrom(double start, double step, double max, Context * context, ComputePointOfInterest compute) const {
-  assert(plotType() == PlotType::Cartesian);
+  assert(plotType() == PlotType::Cartesian && !isPiecewise() && !isScatter());
   constexpr int bufferSize = CodePoint::MaxCodePointCharLength + 1;
   char unknownX[bufferSize];
   SerializationHelper::CodePoint(unknownX, bufferSize, UCodePointUnknown);
@@ -404,7 +728,9 @@ Coordinate2D<double> ContinuousFunction::nextPointOfInterestFrom(double start, d
 }
 
 Poincare::Expression ContinuousFunction::sumBetweenBounds(double start, double end, Poincare::Context * context) const {
-  assert(plotType() == PlotType::Cartesian);
+  if (isPiecewise() || isScatter() || plotType() != PlotType::Cartesian) {
+    return Undefined::Builder();
+  }
   start = std::max<double>(start, tMin());
   end = std::min<double>(end, tMax());
   return Poincare::Integral::Builder(expressionReduced(context).clone(), Poincare::Symbol::Builder(UCodePointUnknown), Poincare::Float<double>::Builder(start), Poincare::Float<double>::Builder(end)); // Integral takes ownership of args
@@ -413,12 +739,162 @@ Poincare::Expression ContinuousFunction::sumBetweenBounds(double start, double e
    * the derivative table. */
 }
 
+double ContinuousFunction::evaluateImplicitAt(double x, double y, Poincare::Context * context) const {
+  if (isRawContent()) {
+    return NAN;
+  }
+  /* Work on a clone: replaceSymbolWithExpression mutates the tree in place and
+   * expressionReduced returns a cached handle. Mutating the cache would turn
+   * the implicit equation into a constant after the first evaluation. */
+  Expression e = expressionClone();
+  if (e.isUninitialized()) {
+    return NAN;
+  }
+  /* The model stores either the full equation (x^2+y^2=1) or a single
+   * expression to compare to zero (x+y for x+y<=0). */
+  auto approximateSide = [context, x, y](Expression side) -> double {
+    side = side.replaceSymbolWithExpression(Symbol::Builder('x'), Float<double>::Builder(x));
+    side = side.replaceSymbolWithExpression(Symbol::Builder('y'), Float<double>::Builder(y));
+    return PoincareHelpers::ApproximateToScalar<double>(side, context);
+  };
+  if (e.type() == ExpressionNode::Type::Equal) {
+    return approximateSide(e.childAtIndex(0)) - approximateSide(e.childAtIndex(1));
+  }
+  return approximateSide(e);
+}
+
+const FunctionEquation::Piecewise & ContinuousFunction::piecewise(
+    Poincare::Context * context) const {
+  if (!m_piecewise.isParsed() && isPiecewise()) {
+    m_piecewise.parse(rawContent(), context);
+  }
+  return m_piecewise;
+}
+
+Ion::Storage::Record::ErrorStatus ContinuousFunction::setRawContent(
+    const char * text, Inequality kind) {
+  Ion::Storage::Record::Data data = value();
+  const size_t previousExpressionSize = data.size - sizeof(RecordDataBuffer);
+  const size_t newExpressionSize = strlen(text) + 1;
+  const size_t previousDataSize = data.size;
+  const size_t newDataSize =
+      previousDataSize - previousExpressionSize + newExpressionSize;
+  data.size = std::max(previousDataSize, newDataSize);
+  Ion::Storage::Record::ErrorStatus error = setValue(data);
+  if (error != Ion::Storage::Record::ErrorStatus::None) {
+    return error;
+  }
+  Ion::Storage::Record::Data resizedData = value();
+  void * expressionAddress = const_cast<char *>(
+      reinterpret_cast<const char *>(resizedData.buffer)) +
+      sizeof(RecordDataBuffer);
+  memmove(expressionAddress, text, newExpressionSize);
+  resizedData.size = newDataSize;
+  error = setValue(resizedData);
+  if (error != Ion::Storage::Record::ErrorStatus::None) {
+    return error;
+  }
+  recordData()->setPlotType(kind == Inequality::Point ||
+                                    kind == Inequality::PointList
+                                ? PlotType::Scatter
+                                : PlotType::Cartesian);
+  recordData()->setInequality(kind);
+  setTMin(-INFINITY);
+  setTMax(INFINITY);
+  setCache(nullptr);
+  m_piecewise.reset();
+  m_model.tidy();
+  return Ion::Storage::Record::ErrorStatus::None;
+}
+
+Ion::Storage::Record::ErrorStatus ContinuousFunction::setExpressionText(
+    const char * text, Poincare::Context * context, CodePoint symbol) {
+  if (symbol == 0) {
+    return editableModel()->setContent(this, text, context, 0);
+  }
+  return ExpressionModelHandle::setContent(text, context);
+}
+
+void ContinuousFunction::resetRawFlag() {
+  const bool wasScatter = plotType() == PlotType::Scatter;
+  recordData()->setInequality(Inequality::None);
+  if (wasScatter) {
+    recordData()->setPlotType(PlotType::Cartesian);
+    recordData()->setTMin(-INFINITY);
+    recordData()->setTMax(INFINITY);
+  }
+  setCache(nullptr);
+  m_piecewise.reset();
+  m_model.tidy();
+}
+
 Ion::Storage::Record::ErrorStatus ContinuousFunction::setContent(const char * c, Poincare::Context * context) {
   setCache(nullptr);
-  return ExpressionModelHandle::setContent(c, context);
+  m_piecewise.reset();
+  m_model.tidy();
+
+  if (IsEmptyText(c)) {
+    resetRawFlag();
+    return setExpressionText("", context,
+                             isImplicit() ? CodePoint(0) : symbol());
+  }
+
+  char strippedContent[Constant::MaxSerializedExpressionSize];
+  if (FunctionEquation::StripFunctionAssignment(c, strippedContent,
+                                                 sizeof(strippedContent))) {
+    c = strippedContent;
+  }
+
+  if (FunctionEquation::IsPiecewise(c)) {
+    return setRawContent(c, Inequality::Piecewise);
+  }
+
+  /* Check the parametric tuple before the point syntax: both are written with
+   * parentheses and a comma. */
+  if (plotType() == PlotType::Parametric) {
+    char matrixText[Constant::MaxSerializedExpressionSize];
+    if (FunctionEquation::ParametricTupleToMatrix(c, matrixText,
+                                                   sizeof(matrixText))) {
+      resetRawFlag();
+      return setExpressionText(matrixText, context, symbol());
+    }
+  }
+
+  if (FunctionEquation::IsPointList(c)) {
+    return setRawContent(c, Inequality::PointList);
+  }
+  if (FunctionEquation::IsPoint(c)) {
+    return setRawContent(c, Inequality::Point);
+  }
+
+  if (isImplicit()) {
+    int inequalityPosition = 0;
+    int inequalityLength = 0;
+    Inequality inequality = Inequality::None;
+    if (FindTopLevelInequality(c, &inequalityPosition, &inequalityLength,
+                               &inequality)) {
+      char leftMember[Constant::MaxSerializedExpressionSize];
+      int leftLength = inequalityPosition;
+      if (leftLength > 0 &&
+          leftLength < static_cast<int>(sizeof(leftMember))) {
+        memcpy(leftMember, c, leftLength);
+        leftMember[leftLength] = 0;
+        resetRawFlag();
+        setInequality(inequality);
+        return setExpressionText(leftMember, context, 0);
+      }
+    }
+  }
+
+  resetRawFlag();
+  return setExpressionText(c, context,
+                           isImplicit() ? CodePoint(0) : symbol());
 }
 
 bool ContinuousFunction::basedOnCostlyAlgorithms(Context * context) const {
+  if (isRawContent()) {
+    return false;
+  }
   return expressionReduced(context).hasExpression([](const Expression e, const void * context) {
         return e.type() == ExpressionNode::Type::Sequence
             || e.type() == ExpressionNode::Type::Integral

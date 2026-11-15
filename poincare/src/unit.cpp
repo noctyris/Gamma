@@ -666,7 +666,14 @@ Layout UnitNode::createLayout(Preferences::PrintFloatMode floatDisplayMode, int 
    * which would change the required size?*/
   static constexpr size_t bufferSize = 10;
   char buffer[bufferSize];
-  int length = serialize(buffer, bufferSize, floatDisplayMode, numberOfSignificantDigits);
+  /* The leading underscore is omitted when the preference is enabled.
+   * Serialization (used to store an expression or to reparse it) always keeps
+   * it, so that a unit cannot be mistaken for a symbol when read back. */
+  int length = 0;
+  if (!Preferences::sharedPreferences()->unitsWithoutUnderscore()) {
+    length = std::min<int>(strlcpy(buffer, "_", bufferSize), bufferSize - 1);
+  }
+  length += m_representative->serialize(buffer + length, bufferSize - length, m_prefix);
   assert(length < bufferSize);
   return LayoutHelper::String(buffer, length);
 }
