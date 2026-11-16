@@ -500,7 +500,7 @@ QUIZ_CASE(poincare_expression_additional_results) {
   assert_additional_results_compute_to("-4×_°F", array17, 2);
 
   // Energy
-  const char * array8[3] = {"3.6×_MJ", "1×_kW×_h", "2.246943ᴇ13×_TeV"};
+  const char * array8[3] = {"3.6×_MJ", "1×_kW×_h", "22.46943×_YeV"};
   assert_additional_results_compute_to("3.6×_MN_m", array8, 3);
 
   // Volume

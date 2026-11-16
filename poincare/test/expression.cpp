@@ -81,7 +81,7 @@ QUIZ_CASE(poincare_expression_unit_constructor) {
   u = Unit::Builder(Unit::k_timeRepresentatives + 2, Unit::Prefix::EmptyPrefix());
   assert_expression_serialize_to(u, "_h");
 
-  u = Unit::Builder(Unit::k_distanceRepresentatives, Unit::k_prefixes + 9);
+  u = Unit::Builder(Unit::k_distanceRepresentatives, Unit::k_prefixes + Unit::k_kiloPrefixIndex);
   assert_expression_serialize_to(u, "_km");
 
   u = Unit::Builder(Unit::k_volumeRepresentatives, Unit::Prefix::EmptyPrefix());

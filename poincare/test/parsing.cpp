@@ -297,7 +297,10 @@ QUIZ_CASE(poincare_parsing_units) {
       quiz_assert_print_if_failure(unit.type() == ExpressionNode::Type::Unit, "Should be parsed as a Unit");
       if (rep->isInputPrefixable()) {
         for (size_t i = 0; i < Unit::Prefix::k_numberOfPrefixes; i++) {
-          const Unit::Prefix * pre = Unit::Prefix::Prefixes();
+          const Unit::Prefix * pre = Unit::Prefix::Prefixes() + i;
+          if (!rep->canPrefix(pre, true)) {
+            continue;
+          }
           Unit::Builder(rep, pre).serialize(buffer, bufferSize, Preferences::PrintFloatMode::Decimal, Preferences::VeryShortNumberOfSignificantDigits);
           Expression unit = parse_expression(buffer, nullptr, false);
           quiz_assert_print_if_failure(unit.type() == ExpressionNode::Type::Unit, "Should be parsed as a Unit");
