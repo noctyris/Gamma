@@ -111,7 +111,7 @@ make MODEL=n0100 epsilon_flash
 ```
 
 Only one language is supported on n0100; the build defaults to English and
-removes the Reader and ulab.
+removes Reader, Atomic and ulab to fit the 1 MB flash.
 
 ### NumWorks n0110
 

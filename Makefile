@@ -18,9 +18,13 @@ ifeq (${MODEL}, n0100)
   	EPSILON_APPS := $(filter-out reader,$(EPSILON_APPS))
   endif
   ifneq ($(words $(EPSILON_I18N)), 1)
-  	$(warning Only use 1 language on n0100, defaulting to en. )
-  	EPSILON_I18N := en
+    $(warning Only use 1 language on n0100, defaulting to en. )
+    EPSILON_I18N := en
   endif
+  ifneq ($(filter atomic,$(EPSILON_APPS)),)
+    $(warning Removing Atomic on n0100 to fit the 1 MB flash. )
+  endif
+  override EPSILON_APPS := $(filter-out atomic,$(EPSILON_APPS))
   ifeq ($(INCLUDE_ULAB), 1)
     $(warning Removing uLab on n0100. )
     INCLUDE_ULAB := 0

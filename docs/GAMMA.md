@@ -143,7 +143,7 @@ to the calculator.
 | Epsilon 23.2.3 | Later official release; not imported | No source or ABI compatibility. Gamma is not a drop-in replacement for this firmware. |
 | n0110 with Gamma bootloader | Native target | Supported: A/B slots, recovery, external apps. |
 | n0110 legacy flash | Native target | Buildable, deprecated: no slot protection. |
-| n0100 | Reduced legacy target | Buildable with one language, no Reader, no ulab and no external apps. |
+| n0100 | Reduced legacy target | Buildable with one language, no Reader, Atomic, ulab or external apps. |
 | Linux simulator | Native host target | Supported and covered by tests. |
 | Web simulator | Emscripten target | Supported build; browser testing is manual. |
 | Android, iOS, macOS, Windows, 3DS, fxcg, nspire | Hosted ports | Buildable when the platform SDK is present; less tested than Linux. |
@@ -172,10 +172,11 @@ preserving compatibility with existing external apps.
 ## n0100 policy
 
 The n0100 remains buildable as a **legacy target**. It receives no new
-applications or features that increase flash usage, and Reader, ulab and external
-apps stay disabled. The model is increasingly rare and its 1 MB flash is the
-limiting factor. A future major release may remove the target entirely; until
-then, changes must keep `make MODEL=n0100` buildable.
+applications or features that increase flash usage. Reader, Atomic, ulab and
+external apps stay disabled; Atomic is removed because the full app set overflows
+the 1 MB flash. The model is increasingly rare and its flash is the limiting
+factor. A future major release may remove the target entirely; until then,
+changes must keep `make MODEL=n0100` buildable.
 
 ## Upstream policy
 
