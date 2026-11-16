@@ -131,10 +131,10 @@ const UserlandHeader __attribute__((section(".userland_header"), used)) k_userla
   .m_externalAppsRAMStart = externalAppsRAMStart,
   .m_externalAppsRAMEnd = externalAppsRAMEnd,
   #else
-  .m_externalAppsFlashStart = 0xFFFFFFFF,
-  .m_externalAppsFlashEnd = 0xFFFFFFFF,
-  .m_externalAppsRAMStart = 0xFFFFFFFF,
-  .m_externalAppsRAMEnd = 0xFFFFFFFF,
+  .m_externalAppsFlashStart = nullptr,
+  .m_externalAppsFlashEnd = 0,
+  .m_externalAppsRAMStart = nullptr,
+  .m_externalAppsRAMEnd = nullptr,
   #endif
   .m_footer = Magic,
   .m_omegaMagicHeader = OmegaMagic,
