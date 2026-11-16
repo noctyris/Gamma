@@ -181,7 +181,8 @@ tests_src += $(addprefix poincare/test/,\
   expression_serialization.cpp\
   expression_to_layout.cpp\
   function_solver.cpp\
-  helper.cpp\
+  golden.cpp \
+  helper.cpp \
   helpers.cpp\
   infinity.cpp \
   integer.cpp\

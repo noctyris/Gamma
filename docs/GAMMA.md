@@ -194,6 +194,11 @@ NumWorks releases.
 5. Any upstream-derived change must pass the simulator build and the full test
    suite before review.
 
+See also the clean-room roadmap for Epsilon 23.x
+([CLEAN-ROOM-23.md](./CLEAN-ROOM-23.md)), the test matrix
+([TEST-MATRIX.md](./TEST-MATRIX.md)) and the release procedure
+([RELEASING.md](./RELEASING.md)).
+
 ## Useful commands
 
 ```bash

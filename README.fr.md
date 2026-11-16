@@ -188,6 +188,9 @@ composants tiers.
 - [Discussions](https://github.com/noctyris/Gamma/discussions)
 - [Documentation de compilation](./docs/)
 - [Architecture, compatibilité et politique upstream](./docs/GAMMA.md)
+- [Feuille de route clean-room Epsilon 23.x](./docs/CLEAN-ROOM-23.md)
+- [Matrice de tests](./docs/TEST-MATRIX.md)
+- [Processus de release](./docs/RELEASING.md)
 - [Guide de contribution](./CONTRIBUTING.md)
 
 NumWorks est une marque déposée de NumWorks SAS. Nintendo et Nintendo 3DS sont
