@@ -1,0 +1,64 @@
+name: Pages
+
+on:
+  push:
+    branches: [gamma]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy Gamma Pages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential git imagemagick zip \
+            libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev \
+            pkg-config
+
+      - name: Setup Emscripten
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: 4.0.22
+
+      - name: Build web simulator
+        run: make PLATFORM=simulator TARGET=web htmlpack.zip -j"$(nproc)"
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site/simulator
+          cp -R site/. _site/
+          unzip -q output/release/simulator/web/htmlpack.zip -d _site/simulator
+          test -f _site/simulator/simulator.html
+          test -f _site/simulator/epsilon.js
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

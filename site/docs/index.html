@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Build, install and license information for Gamma.">
+  <title>Gamma documentation</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #17191c;
+      --muted: #5c636b;
+      --line: #d8dce1;
+      --accent: #e5484d;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111316;
+        --panel: #191c20;
+        --ink: #f2f4f6;
+        --muted: #a7afb8;
+        --line: #30353b;
+        --accent: #ff6369;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    a { color: var(--accent); }
+    header, main, footer { width: min(900px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 26px 0; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; }
+    header a { color: var(--ink); text-decoration: none; font-weight: 700; }
+    header .links { display: flex; gap: 18px; flex-wrap: wrap; }
+    h1 { font-size: clamp(2rem, 6vw, 3.2rem); letter-spacing: -0.04em; line-height: 1.05; margin: 24px 0 14px; }
+    h2 { margin-top: 38px; letter-spacing: -0.02em; }
+    p, li { color: var(--muted); }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    code { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; color: var(--ink); }
+    pre { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; }
+    pre code { border: 0; padding: 0; background: transparent; }
+    .notice { background: var(--panel); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; }
+    footer { margin-top: 50px; padding: 24px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="../">Gamma</a>
+    <div class="links">
+      <a href="../#simulator">Simulator</a>
+      <a href="https://github.com/noctyris/Gamma">Source</a>
+      <a href="https://github.com/noctyris/Gamma/releases">Releases</a>
+    </div>
+  </header>
+
+  <main>
+    <h1>Build and install Gamma</h1>
+    <p class="notice">
+      Gamma is based on the public Epsilon 15.5.0 sources. It does not include code
+      from Epsilon 16.0.0 or later, which NumWorks publishes under “All rights
+      reserved”.
+    </p>
+
+    <h2>Requirements</h2>
+    <p>On Debian or Ubuntu:</p>
+    <pre><code>sudo apt-get install build-essential git imagemagick \
+  libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev \
+  pkg-config gcc-arm-none-eabi binutils-arm-none-eabi</code></pre>
+    <p>Then clone the repository with its submodules:</p>
+    <pre><code>git clone --recursive https://github.com/noctyris/Gamma.git
+cd Gamma
+git checkout gamma-dev</code></pre>
+
+    <h2>Linux simulator</h2>
+    <pre><code>make PLATFORM=simulator TARGET=linux -j"$(nproc)"
+make PLATFORM=simulator TARGET=linux test -j"$(nproc)"
+./output/release/simulator/linux/test.bin --headless</code></pre>
+
+    <h2>Web simulator</h2>
+    <p>Install emsdk 4.0.22, activate it, then run:</p>
+    <pre><code>make PLATFORM=simulator TARGET=web htmlpack.zip -j"$(nproc)"</code></pre>
+
+    <h2>n0110 with the Gamma bootloader</h2>
+    <pre><code>make MODEL=bootloader GAMMA_USERNAME="Your name" -j"$(nproc)"
+make epsilon.A_flash</code></pre>
+    <p>
+      The bootloader keeps two slots. Flashing slot A or B leaves the other slot
+      intact. Use a USB cable and follow the DFU instructions printed by the build.
+    </p>
+
+    <h2>n0100</h2>
+    <pre><code>make MODEL=n0100 EPSILON_I18N=en GAMMA_USERNAME="Your name" -j"$(nproc)"
+make MODEL=n0100 epsilon_flash</code></pre>
+    <p>n0100 supports one language only and does not include Reader or ulab.</p>
+
+    <h2 id="license">License</h2>
+    <p>
+      Gamma's original code and the code inherited from Epsilon 15.5.0, Omega and
+      Upsilon are distributed under
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode">CC BY-NC-SA 4.0</a>.
+      This license does not apply to Epsilon 16.0.0 or later. See the
+      <a href="https://github.com/noctyris/Gamma/blob/gamma-dev/NOTICE.md">NOTICE</a>
+      for the full notice, trademarks and third-party components.
+    </p>
+    <p>
+      NumWorks is a registered trademark of NumWorks SAS. Gamma is a community
+      project and is not affiliated with or endorsed by NumWorks.
+    </p>
+  </main>
+
+  <footer>
+    <a href="../">Back to Gamma</a> ·
+    <a href="https://github.com/noctyris/Gamma/blob/gamma-dev/README.md">README</a> ·
+    <a href="https://github.com/noctyris/Gamma/issues">Issues</a>
+  </footer>
+</body>
+</html>

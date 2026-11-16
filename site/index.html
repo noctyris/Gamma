@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gamma, a community operating system for NumWorks calculators.">
+  <title>Gamma — NumWorks operating system</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #17191c;
+      --muted: #5c636b;
+      --line: #d8dce1;
+      --accent: #e5484d;
+      --accent-ink: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111316;
+        --panel: #191c20;
+        --ink: #f2f4f6;
+        --muted: #a7afb8;
+        --line: #30353b;
+        --accent: #ff6369;
+        --accent-ink: #1b1d20;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    a { color: var(--accent); }
+    header, main, footer { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 28px 0 8px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.35rem; letter-spacing: -0.02em; }
+    .brand svg { width: 38px; height: 38px; }
+    nav { display: flex; flex-wrap: wrap; gap: 18px; font-weight: 600; }
+    nav a { color: var(--ink); text-decoration: none; }
+    nav a:hover { color: var(--accent); }
+    .hero { padding: 48px 0 28px; max-width: 760px; }
+    h1 { margin: 0 0 12px; font-size: clamp(2.2rem, 7vw, 4.6rem); line-height: 1.02; letter-spacing: -0.05em; }
+    .lead { font-size: 1.18rem; color: var(--muted); margin: 0 0 24px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .button { display: inline-block; padding: 12px 18px; border-radius: 10px; text-decoration: none; font-weight: 700; }
+    .button.primary { background: var(--accent); color: var(--accent-ink); }
+    .button.secondary { border: 1px solid var(--line); color: var(--ink); background: var(--panel); }
+    section { padding: 28px 0; }
+    h2 { margin: 0 0 14px; font-size: 1.55rem; letter-spacing: -0.02em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+    .card h3 { margin: 0 0 8px; font-size: 1rem; }
+    .card p { margin: 0; color: var(--muted); }
+    .simulator-frame { width: 100%; height: 760px; border: 1px solid var(--line); border-radius: 14px; background: #c2c2c2; }
+    .note { color: var(--muted); font-size: 0.92rem; }
+    footer { padding: 34px 0 52px; color: var(--muted); font-size: 0.92rem; border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="16" fill="#e5484d"/>
+        <path d="M18 46V18h28v7H26v5h16v7H26v5h20v7H18z" fill="#fff"/>
+      </svg>
+      <span>Gamma</span>
+    </div>
+    <nav aria-label="Main navigation">
+      <a href="./docs/">Documentation</a>
+      <a href="#simulator">Simulator</a>
+      <a href="https://github.com/noctyris/Gamma">GitHub</a>
+      <a href="https://github.com/noctyris/Gamma/releases">Releases</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>A community OS for NumWorks calculators.</h1>
+      <p class="lead">
+        Gamma continues the Epsilon 15.5.0 lineage with themes, wallpapers,
+        external apps, Finance, a redesigned Functions app and many quality-of-life
+        improvements.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="#simulator">Try the simulator</a>
+        <a class="button secondary" href="./docs/">Build and install</a>
+      </div>
+    </div>
+
+    <section aria-labelledby="features">
+      <h2 id="features">What is inside</h2>
+      <div class="grid">
+        <article class="card"><h3>Epsilon 15.5.0 base</h3><p>Stable, public and licensed under CC BY-NC-SA 4.0.</p></article>
+        <article class="card"><h3>Gamma themes</h3><p>Light and dark themes, wallpapers and a theme engine.</p></article>
+        <article class="card"><h3>Apps that matter</h3><p>Finance, RPN, Atomic, Reader and external applications.</p></article>
+        <article class="card"><h3>Bootloader slots</h3><p>Safe A/B installation on supported n0110 calculators.</p></article>
+      </div>
+    </section>
+
+    <section id="simulator" aria-labelledby="simulator-title">
+      <h2 id="simulator-title">Run Gamma in your browser</h2>
+      <p class="note">
+        The simulator is built from the current release branch. Click the screen
+        first, then use your keyboard. On touch devices, use the on-screen keys.
+      </p>
+      <iframe class="simulator-frame" src="./simulator/simulator.html" title="Gamma web simulator" loading="lazy"></iframe>
+    </section>
+
+    <section aria-labelledby="install">
+      <h2 id="install">Install on a calculator</h2>
+      <p>
+        Read the <a href="./docs/">build and installation guide</a> first. A
+        firmware has full access to the calculator: only flash binaries you built
+        yourself or downloaded from this repository's releases.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    Gamma is a community project, not affiliated with NumWorks SAS.
+    Gamma's original code and the Epsilon 15.5.0 base are distributed under
+    CC BY-NC-SA 4.0. No code from Epsilon 16.0.0 or later is included.
+    <a href="./docs/#license">Licensing details</a>.
+  </footer>
+</body>
+</html>

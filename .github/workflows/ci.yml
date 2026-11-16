@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [gamma, gamma-dev]
+  pull_request:
+    branches: [gamma, gamma-dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    name: Linux simulator and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential git imagemagick \
+            libx11-dev libxext-dev libfreetype6-dev libpng-dev libjpeg-dev \
+            pkg-config
+
+      - name: Build simulator
+        run: make PLATFORM=simulator TARGET=linux -j"$(nproc)"
+
+      - name: Build tests
+        run: make PLATFORM=simulator TARGET=linux test -j"$(nproc)"
+
+      - name: Run tests
+        run: ./output/release/simulator/linux/test.bin --headless
+
+  lint:
+    name: Shell, Python and workflow lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check shell scripts
+        run: bash -n flash flash_incog
+
+      - name: Check Python syntax
+        run: |
+          python3 -m py_compile \
+            apps/home/apps_layout.py \
+            build/device/dfu.py \
+            apps/i18n.py
+
+      - name: Check GitHub Actions workflows
+        env:
+          ACTIONLINT_VERSION: 1.7.7
+        run: |
+          curl -sSfL \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C /tmp actionlint
+          /tmp/actionlint -color

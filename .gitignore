@@ -11,3 +11,5 @@ epsilon.map
 .cache/
 compile_commands.json
 notes.txt
+__pycache__/
+*.pyc
