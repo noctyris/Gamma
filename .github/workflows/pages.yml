@@ -41,15 +41,19 @@ jobs:
           version: 4.0.22
 
       - name: Build web simulator
-        run: make PLATFORM=simulator TARGET=web htmlpack.zip -j"$(nproc)"
+        # epsilon.zip is the standalone simulator (simulator.html, epsilon.js and
+        # background.jpg). htmlpack.zip only contains the embeddable assets and
+        # has no simulator.html, so it cannot be served as-is.
+        run: make PLATFORM=simulator TARGET=web epsilon.zip -j"$(nproc)"
 
       - name: Prepare site
         run: |
           mkdir -p _site/simulator
           cp -R site/. _site/
-          unzip -q output/release/simulator/web/htmlpack.zip -d _site/simulator
+          unzip -q output/release/simulator/web/epsilon.zip -d _site/simulator
           test -f _site/simulator/simulator.html
           test -f _site/simulator/epsilon.js
+          test -f _site/simulator/background.jpg
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
