@@ -7,14 +7,14 @@
 namespace Bootloader {
   class DfuMenu : public Menu {
     public:
-      DfuMenu(const char * submenu, const USBData * usbData);
+      DfuMenu(const char * submenu, USBData usbData);
 
       void setup() override;
       void postOpen() override;
 
     private:
       const char * m_submenuText;
-      const USBData * m_data;
+      USBData m_data;
   };
 }
 
