@@ -1,8 +1,6 @@
 #include "function_models_parameter_controller.h"
 #include "list_controller.h"
-#include <poincare/expression.h>
 #include <poincare/layout_helper.h>
-#include <poincare/preferences.h>
 #include <apps/i18n.h>
 #include <assert.h>
 #include <string.h>
@@ -12,35 +10,6 @@ using namespace Poincare;
 namespace Graph {
 
 namespace {
-
-bool ContainsInequalityOperator(const char * text) {
-  /* Do not use strstr here: the device libc is freestanding and does not
-   * declare it. The UTF-8 sequences are the two comparison symbols. */
-  const unsigned char * pointer = reinterpret_cast<const unsigned char *>(text);
-  for (; *pointer != 0; pointer++) {
-    if (*pointer == '<' || *pointer == '>') {
-      return true;
-    }
-    if (pointer[0] == 0xE2 && pointer[1] == 0x89 &&
-        (pointer[2] == 0xA4 || pointer[2] == 0xA5)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-Poincare::Layout ModelLayout(const char * text) {
-  /* The inequality templates cannot be parsed as plain expressions. The other
-   * templates are parsed to get proper exponents and square roots. */
-  if (!ContainsInequalityOperator(text)) {
-    Poincare::Expression expression = Poincare::Expression::Parse(text, nullptr);
-    if (!expression.isUninitialized()) {
-      return expression.createLayout(Poincare::Preferences::PrintFloatMode::Decimal, 1);
-    }
-  }
-  return Poincare::LayoutHelper::String(text, strlen(text));
-}
-
 }
 
 constexpr const char * FunctionModelsParameterController::k_modelDescriptions[k_numberOfExpressionCells];
@@ -122,9 +91,11 @@ void FunctionModelsParameterController::willDisplayCellForIndex(HighlightCell * 
     return;
   }
   assert(index > 0 && index <= k_numberOfExpressionCells);
-  /* The cells are reused while scrolling: build the layout of the row that is
-   * being displayed instead of keeping one layout per template in RAM. */
-  static_cast<ExpressionTableCell *>(cell)->setLayout(ModelLayout(k_modelDescriptions[index - 1]));
+  /* These templates are display-only labels. Parsing them to build prettier
+   * layouts can exhaust the Poincare pool when a row is scrolled in (notably
+   * "x=√(y)"), which resets the app. Keep them as literal layouts. */
+  const char * text = k_modelDescriptions[index - 1];
+  static_cast<ExpressionTableCell *>(cell)->setLayout(LayoutHelper::String(text, strlen(text)));
 }
 
 int FunctionModelsParameterController::typeAtLocation(int i, int j) {

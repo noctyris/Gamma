@@ -29,7 +29,9 @@ public:
 private:
   constexpr static int k_numberOfModels = 15;
   constexpr static int k_numberOfExpressionCells = k_numberOfModels - 1;
-  constexpr static int k_numberOfReusableCells = 5;
+  /* The table can display six rows at once. Once the empty row is scrolled
+   * out, all six visible rows are expression cells. */
+  constexpr static int k_numberOfReusableCells = 6;
   static constexpr const char * k_modelDescriptions[k_numberOfExpressionCells] = {
     "f(x)=x",
     "x+y+1=0",
