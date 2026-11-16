@@ -188,7 +188,8 @@ NumWorks releases.
    or public documentation and record the reference in the commit message.
 3. Keep license and attribution notices intact when moving inherited code.
 4. Use a temporary `upstream-sync` worktree for a no-commit test merge. The goal
-   is a conflict report by module, not an import.
+   is a conflict report by module, not an import. The 16.0.0 report is in
+   [UPSTREAM-16.0.0.md](./UPSTREAM-16.0.0.md).
 5. Any upstream-derived change must pass the simulator build and the full test
    suite before review.
 
