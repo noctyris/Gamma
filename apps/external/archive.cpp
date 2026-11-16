@@ -31,8 +31,30 @@ struct TarHeader
 
 static_assert(sizeof(TarHeader) == 512);
 
+constexpr uintptr_t kArchiveStart = 0x90200000;
+constexpr uintptr_t kArchiveEnd = 0x90800000;
+
 bool isSane(const TarHeader* tar) {
+  uintptr_t address = reinterpret_cast<uintptr_t>(tar);
+  if (address < kArchiveStart || address > kArchiveEnd - sizeof(TarHeader)) {
+    return false;
+  }
   return !memcmp(tar->magic, "ustar  ", 8) && tar->name[0] != '\x00' && tar->name[0] != '\xFF';
+}
+
+bool parseSize(const TarHeader* tar, size_t & size) {
+  size = 0;
+  for (int i = 0; i < 11; i++) {
+    char digit = tar->size[i];
+    if (digit < '0' || digit > '7') {
+      return false;
+    }
+    if (size > (kArchiveEnd - kArchiveStart) / 8) {
+      return false;
+    }
+    size = size * 8 + (digit - '0');
+  }
+  return size <= kArchiveEnd - kArchiveStart;
 }
 
 bool isExamModeAndFileNotExecutable(const TarHeader* tar) {
@@ -45,17 +67,13 @@ bool isArchiveHeaderValid() {
 }
 
 bool fileAtIndex(size_t index, File &entry) {
-  if (index == -1) {
+  if (index == static_cast<size_t>(-1)) {
     return false;
   }
 
-  const TarHeader* tar = reinterpret_cast<const TarHeader*>(0x90200000);
-  unsigned size = 0;
-
-  // Sanity check.
-  if (!isSane(tar) || isExamModeAndFileNotExecutable(tar)) {
-    return false;
-  }
+  const TarHeader* tar = reinterpret_cast<const TarHeader*>(kArchiveStart);
+  size_t size = 0;
+  uintptr_t address = kArchiveStart;
 
   /**
    * TAR files are comprised of a set of records aligned to 512 bytes boundary
@@ -63,18 +81,22 @@ bool fileAtIndex(size_t index, File &entry) {
    */
 
   for(;;) {
-    // Calculate the size
-    size = 0;
-    for (int i = 0; i < 11; i++)
-      size = size * 8 + (tar->size[i] - '0');
+    // Sanity check before reading any field (including the size).
+    if (!isSane(tar) || isExamModeAndFileNotExecutable(tar)) {
+      return false;
+    }
+
+    if (!parseSize(tar, size)) {
+      return false;
+    }
+
+    address = reinterpret_cast<uintptr_t>(tar);
+    if (size > kArchiveEnd - (address + sizeof(TarHeader))) {
+      return false;
+    }
 
     // Check if we found our file.
     if (index == 0) {
-      // If yes, check for sanity and for exam mode stuff
-      if (!isSane(tar) || isExamModeAndFileNotExecutable(tar)) {
-        return false;
-      }
-
       // File entry found, copy data out.
       entry.name = tar->name;
       entry.data = reinterpret_cast<const uint8_t*>(tar) + sizeof(TarHeader);
@@ -84,17 +106,14 @@ bool fileAtIndex(size_t index, File &entry) {
       entry.readable = true;
 
       return true;
-    } else {
-      // move to the next TAR header.
-      unsigned stride = (sizeof(TarHeader) + size + 511);
-      stride = (stride >> 9) << 9;
-      tar = reinterpret_cast<const TarHeader*>(reinterpret_cast<const char*>(tar) + stride);
-
-      // Sanity check.
-      if (!isSane(tar)) {
-        return false;
-      }
     }
+
+    // Move to the next TAR header.
+    size_t stride = (sizeof(TarHeader) + size + 511) & ~static_cast<size_t>(511);
+    if (stride > kArchiveEnd - address) {
+      return false;
+    }
+    tar = reinterpret_cast<const TarHeader*>(reinterpret_cast<const char*>(tar) + stride);
     index--;
   }
 
