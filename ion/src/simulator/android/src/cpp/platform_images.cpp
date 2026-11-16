@@ -12,7 +12,7 @@ SDL_Texture * loadImage(SDL_Renderer * renderer, const char * identifier) {
   JNIEnv * env = static_cast<JNIEnv *>(SDL_AndroidGetJNIEnv());
   jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
 
-  jclass j_class = env->FindClass("io/github/upsilon/simulator/UpsilonActivity");
+  jclass j_class = env->FindClass("io/github/noctyris/gamma/GammaActivity");
   jmethodID j_methodId = env->GetMethodID(
     j_class,
     "retrieveBitmapAsset",

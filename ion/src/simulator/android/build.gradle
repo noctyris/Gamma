@@ -31,14 +31,14 @@ allprojects {
 apply plugin: 'com.android.application'
 
 android {
-  namespace = "io.github.upsilon.simulator"
+  namespace = "io.github.noctyris.gamma"
   compileSdkVersion 37
   defaultConfig {
-    applicationId "io.github.upsilon.simulator"
+    applicationId "io.github.noctyris.gamma"
     minSdkVersion 21
     targetSdkVersion 33
     versionCode Instant.now().getEpochSecond().toInteger()
-    versionName LocalDate.now().format("yyyyMMdd")+'-'+System.getenv('UPSILON_VERSION')
+    versionName LocalDate.now().format("yyyyMMdd")+'-'+System.getenv('GAMMA_VERSION')
   }
   signingConfigs {
     environment {

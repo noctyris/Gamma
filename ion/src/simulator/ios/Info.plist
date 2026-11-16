@@ -7,11 +7,11 @@
     <key>CFBundleExecutable</key>
     <string>Epsilon</string>
     <key>CFBundleIdentifier</key>
-    <string>io.github.upsilon.simulator</string>
+    <string>io.github.noctyris.gamma</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>NumWorks</string>
+    <string>Gamma</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSupportedPlatforms</key>

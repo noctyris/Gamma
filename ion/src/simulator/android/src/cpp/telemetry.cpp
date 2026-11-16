@@ -22,7 +22,7 @@ namespace Telemetry {
 void init() {
   JNIEnv * env = AndroidJNI();
 
-  jclass j_class = env->FindClass("com/numworks/calculator/EpsilonActivity");
+  jclass j_class = env->FindClass("io/github/noctyris/gamma/GammaActivity");
   jmethodID j_methodId = env->GetMethodID(j_class,"telemetryInit", "()V");
   assert(j_methodId != 0);
 
@@ -43,7 +43,7 @@ namespace Telemetry {
 void reportScreen(const char * screenName) {
   JNIEnv * env = AndroidJNI();
 
-  jclass j_class = env->FindClass("com/numworks/calculator/EpsilonActivity");
+  jclass j_class = env->FindClass("io/github/noctyris/gamma/GammaActivity");
   jmethodID j_methodId = env->GetMethodID(j_class, "telemetryScreen", "(Ljava/lang/String;)V");
   assert(j_methodId != 0);
 
@@ -54,7 +54,7 @@ void reportScreen(const char * screenName) {
 void reportEvent(const char * category, const char * action, const char * label) {
   JNIEnv * env = AndroidJNI();
 
-  jclass j_class = env->FindClass("com/numworks/calculator/EpsilonActivity");
+  jclass j_class = env->FindClass("io/github/noctyris/gamma/GammaActivity");
   jmethodID j_methodId = env->GetMethodID(j_class, "telemetryEvent", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
   assert(j_methodId != 0);
 

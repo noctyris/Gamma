@@ -1,4 +1,4 @@
-package io.github.upsilon.simulator;
+package io.github.noctyris.gamma;
 
 import java.util.Locale;
 
@@ -14,7 +14,7 @@ import android.util.Log;
 import org.libsdl.app.SDLActivity;
 import org.libsdl.app.SDL;
 
-public class UpsilonActivity extends SDLActivity {
+public class GammaActivity extends SDLActivity {
   protected String[] getLibraries() {
     return new String[] {
       "epsilon"

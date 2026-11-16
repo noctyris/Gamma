@@ -10,7 +10,7 @@ namespace Flasher {
         constexpr static const char * sMessages[sNumberOfMessages] = {
             "RECOVERY MODE",
             "Your calculator is waiting",
-            "for Upsilon to be installed.",
+            "for Gamma to be installed.",
             "Follow the instructions",
             "on your computer to continue.",
         };

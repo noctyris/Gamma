@@ -186,6 +186,7 @@ components.
 - [Issue tracker](https://github.com/noctyris/Gamma/issues)
 - [Discussions](https://github.com/noctyris/Gamma/discussions)
 - [Build documentation](./docs/)
+- [Architecture, compatibility and upstream policy](./docs/GAMMA.md)
 - [Contributing guide](./CONTRIBUTING.md)
 
 NumWorks is a registered trademark of NumWorks SAS. Nintendo and Nintendo 3DS

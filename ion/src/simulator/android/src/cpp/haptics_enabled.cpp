@@ -10,7 +10,7 @@ namespace Haptics {
 bool isEnabled() {
   JNIEnv * env = static_cast<JNIEnv *>(SDL_AndroidGetJNIEnv());
   jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
-  jclass j_class = env->FindClass("io/github/upsilon/simulator/UpsilonActivity");
+  jclass j_class = env->FindClass("io/github/noctyris/gamma/GammaActivity");
   jmethodID j_methodId = env->GetMethodID(j_class,"hapticFeedbackIsEnabled", "()Z");
   assert(j_methodId != 0);
   bool result = (env->CallBooleanMethod(activity, j_methodId) != JNI_FALSE);

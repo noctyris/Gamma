@@ -9,13 +9,13 @@ BEGIN
   BEGIN
     BLOCK "040904E4"
     BEGIN
-      VALUE "CompanyName", "NumWorks"
-      VALUE "FileDescription", "Graphing calculator simulator"
+      VALUE "CompanyName", "Gamma contributors"
+      VALUE "FileDescription", "Gamma graphing calculator simulator"
       VALUE "FileVersion", "1.0"
       VALUE "InternalName", "epsilon"
-      VALUE "LegalCopyright", "NumWorks"
+      VALUE "LegalCopyright", "Gamma contributors"
       VALUE "OriginalFilename", "epsilon.exe"
-      VALUE "ProductName", "Epsilon"
+      VALUE "ProductName", "Gamma"
       VALUE "ProductVersion", "1.0"
     END
   END

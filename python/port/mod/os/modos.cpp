@@ -22,7 +22,7 @@ extern "C" {
 #error This file expects UPSILON_VERSION to be defined
 #endif
 
-static const MP_DEFINE_STR_OBJ(modos_uname_info_sysname_obj, "NumWorks");
+static const MP_DEFINE_STR_OBJ(modos_uname_info_sysname_obj, "Gamma");
 static const MP_DEFINE_STR_OBJ(modos_uname_info_nodename_obj, "");
 
 static const MP_DEFINE_STR_OBJ(modos_uname_info_release_obj, "O" MP_STRINGIFY(OMEGA_VERSION) "E-" MP_STRINGIFY(EPSILON_VERSION) "U-" MP_STRINGIFY(UPSILON_VERSION));

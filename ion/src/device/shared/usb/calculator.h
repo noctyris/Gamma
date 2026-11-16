@@ -114,7 +114,7 @@ public:
     // @SRAM/0x20000000/01*252Ke
     // @Flash/0x90030000/61*064Kg,64*064Kg
     m_microsoftOSStringDescriptor(k_microsoftOSVendorCode),
-    m_workshopURLDescriptor(URLDescriptor::Scheme::HTTPS, "getupsilon.web.app"),
+    m_workshopURLDescriptor(URLDescriptor::Scheme::HTTPS, "noctyris.github.io/Gamma"),
     m_extendedCompatIdDescriptor("WINUSB"),
     m_descriptors{
       &m_deviceDescriptor,             // Type = Device, Index = 0

@@ -1,7 +1,7 @@
 BasicInfo:
-  Title                   : Upsilon
+  Title                   : Gamma
   CompanyCode             : "00"
-  ProductCode             : CTR-E-Upsilon
+  ProductCode             : CTR-E-Gamma
   Logo                    : Homebrew # Nintendo / Licensed / Distributed / iQue / iQueForSystem
 
 RomFs:
@@ -10,7 +10,7 @@ RomFs:
 
 TitleInfo:
   Category                : Application
-  UniqueId                : 0x069420
+  UniqueId                : 0x069421
 
 Option:
   UseOnSD                 : true # true if App is to be installed to SD

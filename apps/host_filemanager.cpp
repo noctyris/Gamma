@@ -557,24 +557,24 @@ bool filesort(const file & a,const file & b){
 void display_host_help();
 void display_host_help(){
   dclear(C_WHITE);
-  dtext(1,2, C_BLACK,"You can save up to 9 Upsilon calculator states:");
-  dtext(1,38,C_BLACK,"You can manage and exchange Upsilon records");
+  dtext(1,2, C_BLACK,"You can save up to 9 Gamma calculator states:");
+  dtext(1,38,C_BLACK,"You can manage and exchange Gamma records");
   dtext(1,56,C_BLACK,"or restore states: from home, type VARS");
 #ifdef _FXCG
   dtext(1,20,C_BLACK,"From home, type STO (above AC/ON) then 1 to 9");
-  dtext(1,74,C_BLACK,"You can reset Upsilon state from Casio MENU");
+  dtext(1,74,C_BLACK,"You can reset Gamma state from Casio MENU");
   dtext(1,92,C_BLACK,"Select Memory, type F2, then erase nwstore.nws");
-  dtext(1,110,C_RED, "From home, type MENU or DEL to leave Upsilon");
+  dtext(1,110,C_RED, "From home, type MENU or DEL to leave Gamma");
 #else
   dtext(1,20,C_BLACK,"From home, type STO (ctrl VAR) then 1 to 9");
-  dtext(1,74,C_BLACK,"You can reset Upsilon state from Home 2");
+  dtext(1,74,C_BLACK,"You can reset Gamma state from Home 2");
   dtext(1,92,C_BLACK,"Erase nwstore.nws in My documents");
   dtext(1,110,C_RED ,"Type Ctrl K to shutdown screen, ON to restore");
-  dtext(1,128,C_RED ,"From home, type ON or doc to leave Upsilon");
+  dtext(1,128,C_RED ,"From home, type ON or doc to leave Gamma");
   os_wait_1ms(100);
 #endif
-  dtext(1,150,C_BLACK,"Upsilon: a fork of Epsilon (c) Numworks");
-  dtext(1,168,C_BLACK,"https://getupsilon.web.app/");
+  dtext(1,150,C_BLACK,"Gamma: a community OS for NumWorks");
+  dtext(1,168,C_BLACK,"https://noctyris.github.io/Gamma/");
   dtext(1,186,C_BLACK,"creativecommons.org license CC BY-NC-SA 4.0");
   dtext(1,204,C_BLACK,"Persistance and host filesystem (c) B. Parisse");
   dupdate();
@@ -612,7 +612,7 @@ void host_filemanager(){
     dtext(1,17,C_BLACK,"Cursor keys: move, /: rootdir");
 #endif
     dtext(1,33,C_BLACK,"EXE or STO key: copy selection from/to host");
-    dtext(1,49,C_BLACK,("Upsilon records             Host "+hostdir).c_str());
+    dtext(1,49,C_BLACK,("Gamma records               Host "+hostdir).c_str());
     int nitems=9;
     if (posnw<0)
       posnw=v.size()-1;
@@ -689,7 +689,7 @@ void host_filemanager(){
       if (!nw && w[poshost].isdir) // can not remove directory
 	continue;
       dclear(C_WHITE);
-      dtext(1,17,C_BLACK,nw?"About to suppress Upsilon record:":"About to suppress Host file:");
+      dtext(1,17,C_BLACK,nw?"About to suppress Gamma record:":"About to suppress Host file:");
       dtext(1,33,C_BLACK,(nw?v[posnw].s:w[poshost].s).c_str());
       dtext(1,49,C_BLACK,"Press EXE or OK to confirm");
       dupdate();
@@ -816,7 +816,7 @@ void host_filemanager(){
 	}
 	if (i<v.size()){
 	  dclear(C_WHITE);
-	  dtext(1,33,C_BLACK,"Script exists in Upsilon!");
+	  dtext(1,33,C_BLACK,"Script exists in Gamma!");
 	  dtext(1,49,C_BLACK,"Press EXE to confirm overwrite");
 	  dupdate();
 	  int k=do_getkey();

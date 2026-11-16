@@ -1,47 +1,57 @@
 <p align="center"><img src="https://github.com/Omega-Numworks/Omega-Design/blob/master/Omega-Themes.png" /></p>
 
-<p align="center">
-  <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="cc by-nc-sa 4.0" src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg?labelColor=292929&logo=creative%20commons&style=for-the-badge" /></a>
-  <a href="https://github.com/Omega-Numworks/Omega-Themes/issues"><img alt="Issues" src="https://img.shields.io/github/issues/Omega-Numworks/Omega-Themes.svg?labelColor=292929&logo=git&style=for-the-badge" /></a>
-</p>
+# Gamma themes
 
-## About
+Gamma uses the theme engine inherited from Omega. A theme is a JSON palette
+compiled into the firmware or simulator; the default is `gamma_dark`.
 
-Omega-Themes `BETA` is the theme engine of [Omega](https://github.com/Omega-Numworks/Omega), an extension to Numworks' Epsilon. This engine allows you to change the theme of Omega easily before installing the OS.
+## Included themes
 
-## Installation
+- Gamma Dark (`gamma_dark`, default)
+- Gamma Light (`gamma_light`)
+- Omega Dark (`omega_dark`)
+- Omega Light (`omega_light`)
+- Upsilon Light (`upsilon_light`)
+- Epsilon Dark (`epsilon_dark`)
+- Epsilon Light (`epsilon_light`)
 
-While compiling Omega, add the `THEME_NAME` flag :
+The Omega, Upsilon and Epsilon themes are kept for compatibility with the
+lineage. Gamma-specific colours are defined in the two `gamma_*` files.
 
+## Usage
+
+```bash
+make THEME_NAME=gamma_light -j"$(nproc)"
 ```
-make THEME_NAME=the_name_of_the_theme -j4
+
+List the local themes:
+
+```bash
+python3 themes/themes_manager.py --list
 ```
 
-There are 4 themes:
-* Omega Light (`THEME_NAME=omega_light`)
-* Omega Dark (`THEME_NAME=omega_dark`)
-* Epsilon Light (`THEME_NAME=epsilon_light`)
-* Epsilon Dark (`THEME_NAME=epsilon_dark`)
+## Third-party themes
 
-## 3rd party themes
+Third-party themes can be loaded from a git repository:
 
-To make your own theme, you can use our 3rd party theme system :
-* Create a new repository with your theme (there is an example [here](https://github.com/Omega-Numworks/Omega-Theme-Example)). Note: You can put several themes in the same repository.
-* It's done!
-
-To install your new theme, use these flags during the compilation:
-
-```
-make THEME_REPO={your repository url} THEME_NAME={Your theme name}
+```bash
+make THEME_REPO={your repository url} THEME_NAME={your theme name}
 ```
 
 Example:
-```
+
+```bash
 make THEME_REPO=https://github.com/Omega-Numworks/Omega-Theme-Example.git THEME_NAME=omega_blue
 ```
 
-> You can use `./themes/script.sh your_theme_name` to build the icons of your theme from the colors of `themes/logocolors.json`.
+To build a theme's icons from the colours in `themes/logocolors.json`, run:
+
+```bash
+./themes/script.sh your_theme_name
+```
 
 ## License
 
-Omega-Themes is released under a [CC BY-NC-SA License](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode). NumWorks is a registered trademark.
+The theme engine and the inherited themes are distributed under the
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)
+license. NumWorks is a registered trademark.

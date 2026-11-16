@@ -12,7 +12,7 @@ void Calculator::PollAndReset(bool exitWithKeyboard, void * data) {
   char serialNumber[Ion::Device::SerialNumber::Length+1];
   Ion::Device::SerialNumber::copy(serialNumber);
 
-  Calculator c(serialNumber, data == nullptr ? stringDescriptor() : static_cast<Bootloader::USBData *>(data)->stringDescriptor(), data == nullptr ? "Upsilon Bootloader" : static_cast<Bootloader::USBData *>(data)->getName());
+  Calculator c(serialNumber, data == nullptr ? stringDescriptor() : static_cast<Bootloader::USBData *>(data)->stringDescriptor(), data == nullptr ? "Gamma Bootloader" : static_cast<Bootloader::USBData *>(data)->getName());
 
   if (data != nullptr) {
     c.setConfigData(static_cast<Bootloader::USBData *>(data));
