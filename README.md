@@ -30,7 +30,6 @@ See [NOTICE.md](./NOTICE.md).
 - Reader application
 - Python extensions: ulab, operator overloading, `os.uname`, `getlogin`
 - Accessibility options: inverted colors, magnifier, RGB gamma correction
-- Finance application (TVM)
 - Graph improvements: implicit plots, inequalities, function types
 - Eight languages: English, French, Dutch, Portuguese, Italian, German, Spanish, Hungarian
 - NumWorks n0100 and n0110 support, including bootloader slots A/B/Khi

@@ -8,7 +8,7 @@ project.
 - `gamma` is the stable branch.
 - `gamma-dev` is the integration branch. Open pull requests against it.
 - Create a feature branch from `gamma-dev`, for example
-  `fix/graph-derivative` or `feature/finance-tvm`.
+  `fix/graph-derivative` or `feature/reader-word-wrap`.
 - Do not open a pull request directly against a release tag.
 
 ## Before you start

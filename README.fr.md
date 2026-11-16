@@ -30,7 +30,6 @@ les versions suivantes sont publiées par NumWorks sans la licence CC BY-NC-SA
 - Application Reader
 - Extensions Python : ulab, surcharge d'opérateurs, `os.uname`, `getlogin`
 - Accessibilité : couleurs inversées, loupe, correction gamma RVB
-- Application Finance (TVM)
 - Améliorations du Grapheur : tracés implicites, inéquations, types de fonctions
 - Huit langues : anglais, français, néerlandais, portugais, italien, allemand, espagnol, hongrois
 - Support des NumWorks n0100 et n0110, avec les slots de bootloader A/B/Khi

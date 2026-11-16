@@ -27,7 +27,7 @@ GAMMA_VERSION ?= $(GAMMA_VERSION_MAJOR).$(GAMMA_VERSION_MINOR).$(GAMMA_VERSION_P
 # for compatibility with older build scripts; build/defaults.mak maps it.
 GAMMA_USERNAME ?= $(OMEGA_USERNAME)
 OMEGA_STATE ?= dev
-EPSILON_APPS ?= calculation graph finance code statistics probability solver atomic sequence regression reader settings external
+EPSILON_APPS ?= calculation graph code statistics probability solver atomic sequence regression reader settings external
 SUBMODULES_APPS = atomic
 EPSILON_I18N ?= en fr nl pt it de es hu
 EPSILON_COUNTRIES ?= WW CA DE ES FR GB IT NL PT US
