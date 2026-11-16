@@ -147,10 +147,12 @@ Voir `make help` pour la liste complète.
 
 ## Installation
 
-Il n'existe pas encore d'installateur Gamma officiel ni de build hébergé.
-Compilez le firmware vous-même, vérifiez l'artefact, puis flashez-le avec l'outil
-adapté. Ne flashez jamais un binaire provenant d'une source non fiable : un
-firmware a un accès complet à la calculatrice.
+Il n'existe pas encore d'installateur Gamma officiel ni de firmware hébergé.
+Un simulateur web est disponible sur le
+[site Gamma](https://noctyris.github.io/Gamma/). Pour une calculatrice, compilez
+le firmware vous-même, vérifiez l'artefact, puis flashez-le avec l'outil adapté.
+Ne flashez jamais un binaire provenant d'une source non fiable : un firmware a
+un accès complet à la calculatrice.
 
 Le bootloader conserve deux slots. Un build compatible bootloader peut être
 flashé dans le slot A ou B sans toucher à l'autre slot. L'ancien mode n0110 sans
@@ -167,13 +169,14 @@ stable. N'ouvrez pas de pull request directement sur un tag de release.
 
 ## Licence
 
-Gamma est distribué sous
-[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.fr),
-comme Epsilon 15.5.0, Omega et Upsilon.
+Sauf mention contraire dans un fichier, le code original de Gamma et le code
+hérité d'Epsilon 15.5.0, d'Omega et d'Upsilon sont distribués sous
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.fr).
 
 - **Epsilon 15.5.0** : CC BY-NC-SA 4.0. C'est la base de Gamma.
 - **Epsilon 16.0.0 et suivants** : pas de fichier `LICENSE` ; le README amont
-  indique « All rights reserved ». Gamma n'inclut pas de code de ces versions.
+  indique « All rights reserved ». Cette licence ne s'applique **pas** à ces
+  versions, et Gamma n'inclut pas de code de ces versions.
 - **Omega** et **Upsilon** : CC BY-NC-SA 4.0.
 
 Voir [NOTICE.md](./NOTICE.md) pour la notice complète, les marques et les
@@ -181,6 +184,7 @@ composants tiers.
 
 ## Liens
 
+- [Site Gamma et simulateur web](https://noctyris.github.io/Gamma/)
 - [Suivi des issues](https://github.com/noctyris/Gamma/issues)
 - [Discussions](https://github.com/noctyris/Gamma/discussions)
 - [Documentation de compilation](./docs/)

@@ -10,7 +10,8 @@ work of Omega and Upsilon, which were themselves based on NumWorks Epsilon.
   license](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 - **Omega** is a fork of Epsilon, distributed under CC BY-NC-SA 4.0.
 - **Upsilon** is a fork of Omega, distributed under CC BY-NC-SA 4.0.
-- **Gamma** is a fork of Upsilon, distributed under CC BY-NC-SA 4.0.
+- **Gamma** is a fork of Upsilon. Gamma's original code and the code inherited
+  from Epsilon 15.5.0, Omega and Upsilon are distributed under CC BY-NC-SA 4.0.
 
 ## Epsilon 16.0.0 and later
 

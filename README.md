@@ -147,10 +147,11 @@ Run `make help` for the full list.
 
 ## Installation
 
-There is no official Gamma installer or hosted build yet. Build the firmware
-yourself, verify the artifact, and flash it with the appropriate tool. Never
-flash a binary from an untrusted source: a firmware has full access to the
-calculator.
+There is no official Gamma firmware installer or hosted firmware build yet. A
+web simulator is available on the [Gamma website](https://noctyris.github.io/Gamma/).
+For a calculator, build the firmware yourself, verify the artifact, and flash it
+with the appropriate tool. Never flash a binary from an untrusted source: a
+firmware has full access to the calculator.
 
 The bootloader keeps two slots. A bootloader build can be flashed into slot A or
 B and keeps the other slot intact. The legacy n0110 build has no slot protection.
@@ -166,13 +167,15 @@ open pull requests directly against a release tag.
 
 ## License
 
-Gamma is distributed under the
+Unless a file says otherwise, Gamma's original code and the code inherited from
+Epsilon 15.5.0, Omega and Upsilon are distributed under the
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)
-license, like Epsilon 15.5.0, Omega and Upsilon.
+license.
 
 - **Epsilon 15.5.0**: CC BY-NC-SA 4.0. This is the base of Gamma.
 - **Epsilon 16.0.0 and later**: no `LICENSE` file; the upstream README states
-  “All rights reserved”. Gamma does not include code from these versions.
+  “All rights reserved”. This license does **not** apply to those versions, and
+  Gamma does not include code from them.
 - **Omega** and **Upsilon**: CC BY-NC-SA 4.0.
 
 See [NOTICE.md](./NOTICE.md) for the full notice, trademarks and third-party
@@ -180,6 +183,7 @@ components.
 
 ## Links
 
+- [Gamma website and web simulator](https://noctyris.github.io/Gamma/)
 - [Issue tracker](https://github.com/noctyris/Gamma/issues)
 - [Discussions](https://github.com/noctyris/Gamma/discussions)
 - [Build documentation](./docs/)
