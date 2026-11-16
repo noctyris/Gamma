@@ -12,10 +12,16 @@ parser = argparse.ArgumentParser(description="Build tools for the placement of a
 parser.add_argument('--header', help='the .h file to generate')
 parser.add_argument('--implementation', help='the .cpp file to generate')
 parser.add_argument('--apps', nargs='+', help='apps that are actually compiled')
-parser.add_argument('--layouts', help='the apps_layout.csv file')
+parser.add_argument('--layouts', help='generated apps_layout.csv path (not the tracked source file)')
 parser.add_argument('--apps_layout', help='the apps_layout from the make command')
 
 args = parser.parse_args()
+
+tracked_layout = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), 'apps_layout.csv')
+if os.path.abspath(args.layouts) == tracked_layout:
+    parser.error('--layouts must point to a generated file, not the tracked '
+                 'apps/home/apps_layout.csv')
 
 layout_dir = os.path.dirname(os.path.abspath(args.layouts))
 if layout_dir:

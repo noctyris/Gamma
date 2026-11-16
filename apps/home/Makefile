@@ -17,7 +17,7 @@ i18n_files += $(call i18n_without_universal_for,home/base)
 SFLAGS += -I$(BUILD_DIR)
 
 # Generate the layout CSV in the build directory. The tracked CSV is a source
-# file and must not be rewritten by a build.
+# file and must not be rewritten by a build; apps_layout.py rejects that path.
 apps_layout = $(BUILD_DIR)/apps/home/apps_layout.csv
 apps_layout_list = $(foreach i, $${EPSILON_APPS}, $(if $(filter external, $(i)),,"$(i),"))
 
