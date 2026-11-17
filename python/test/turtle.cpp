@@ -15,6 +15,7 @@ QUIZ_CASE(python_turtle) {
   assert_command_execution_succeeds(env, "circle(28)");
   assert_command_execution_succeeds(env, "speed(28)");
   assert_command_execution_succeeds(env, "goto(28,28)");
+  assert_command_execution_succeeds(env, "distance(31,32)", "5.0\n");
   assert_command_execution_succeeds(env, "position()", "(28.0, 28.0)\n");
   assert_command_execution_succeeds(env, "setheading(28)");
   assert_command_execution_succeeds(env, "heading()", "28.0\n");

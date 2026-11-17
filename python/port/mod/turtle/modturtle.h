@@ -16,6 +16,7 @@ mp_obj_t modturtle_setheading(mp_obj_t deg);
 mp_obj_t modturtle_speed(size_t n_args, const mp_obj_t *args);
 
 mp_obj_t modturtle_position();
+mp_obj_t modturtle_distance(mp_obj_t px, mp_obj_t py);
 mp_obj_t modturtle_heading();
 
 mp_obj_t modturtle_pendown();

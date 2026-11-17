@@ -20,8 +20,8 @@ tests, comments or assets were read or copied.
 | C5 | Polar grid in the Grapher axis menu | **Absent**: the grid is Cartesian only | `apps/shared/curve_view.cpp`, Grapher range/options | S/M |
 | C6 | Automatic search interval for equation solving | **Present**: editable search interval with a default `[-10, 10]`; verify the exact automatic behaviour of 23.x | `apps/solver/interval_controller.cpp`, `apps/solver/equation_store.cpp` | S |
 | C7 | Inference from Statistics/Regression datasets, including sample mean and standard deviation | **Absent**: no Inference app or dataset import | new `apps/inference/`, `poincare/` statistics helpers | L |
-| C8 | `turtle.distance()` | **Absent** | `python/port/mod/turtle/` | S |
-| C9 | `@` operator in the Python toolbox | **Partial**: the MicroPython qstr exists; the toolbox does not expose it | `apps/code/python_toolbox.cpp`, `python/port/genhdr/` | S |
+| C8 | `turtle.distance()` | **Present**: `distance(x, y)`, catalog entry and simulator test | `python/port/mod/turtle/`, `apps/code/python_toolbox.cpp` | S |
+| C9 | `@` operator in the Python toolbox | **Present**: exposed in the Python catalog and supported by ulab arrays | `apps/code/python_toolbox.cpp`, `python/port/mod/ulab/` | S |
 
 ## Priorities
 
@@ -44,8 +44,8 @@ Priority is by user visibility, not by implementation convenience.
 
 ### P2 - opportunistic
 
-7. **C8, `turtle.distance()`.**
-8. **C9, `@` in the Python toolbox.**
+7. **C8, `turtle.distance()`.** **Done** in the current development tree.
+8. **C9, `@` in the Python toolbox.** **Done** in the current development tree.
 
 ## Clean-room protocol
 

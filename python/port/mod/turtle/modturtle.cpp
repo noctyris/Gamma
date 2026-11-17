@@ -107,6 +107,10 @@ mp_obj_t modturtle_position() {
   return mp_obj_new_tuple(2, mp_pos);
 }
 
+mp_obj_t modturtle_distance(mp_obj_t px, mp_obj_t py) {
+  return mp_obj_new_float(sTurtle.distanceTo(mp_obj_get_float(px), mp_obj_get_float(py)));
+}
+
 mp_obj_t modturtle_heading() {
   return mp_obj_new_float(sTurtle.heading());
 }

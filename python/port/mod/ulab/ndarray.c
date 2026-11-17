@@ -27,6 +27,7 @@
 #include "ndarray_operators.h"
 #include "numpy/carray/carray.h"
 #include "numpy/carray/carray_tools.h"
+#include "numpy/transform.h"
 
 mp_uint_t ndarray_print_threshold = NDARRAY_PRINT_THRESHOLD;
 mp_uint_t ndarray_print_edgeitems = NDARRAY_PRINT_EDGEITEMS;
@@ -1549,6 +1550,14 @@ ndarray_obj_t *ndarray_from_mp_obj(mp_obj_t obj, uint8_t other_type) {
 
 #if NDARRAY_HAS_BINARY_OPS || NDARRAY_HAS_INPLACE_OPS
 mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
+#if ULAB_MAX_DIMS > 1 && ULAB_NUMPY_HAS_DOT
+    if (_op == MP_BINARY_OP_MAT_MULTIPLY) {
+        return transform_dot(lobj, robj);
+    }
+    if (_op == MP_BINARY_OP_REVERSE_MAT_MULTIPLY) {
+        return transform_dot(robj, lobj);
+    }
+#endif
     // TODO: implement in-place operators
     // if the ndarray stands on the right hand side of the expression, simply swap the operands
     ndarray_obj_t *lhs, *rhs;

@@ -84,3 +84,12 @@ QUIZ_CASE(python_ulab) {
   deinit_environment();
 }
 
+QUIZ_CASE(python_ulab_matmul) {
+  TestExecutionEnvironment env = init_environnement();
+  assert_command_execution_succeeds(env, "from ulab import numpy as np");
+  assert_command_execution_succeeds(env, "a = np.array([[1, 2], [3, 4]])");
+  assert_command_execution_succeeds(env, "b = np.array([[5, 6], [7, 8]])");
+  assert_command_execution_succeeds(env, "a @ b");
+  deinit_environment();
+}
+

@@ -54,6 +54,8 @@ public:
   mp_float_t heading() const { return m_heading; }
   void setHeading(mp_float_t angle);
 
+  mp_float_t distanceTo(mp_float_t x, mp_float_t y) const;
+
   uint8_t speed() const { return m_speed; }
   void setSpeed(mp_int_t speed);
 

@@ -145,6 +145,12 @@ void Turtle::setHeading(mp_float_t angle) {
   draw(true);
 }
 
+mp_float_t Turtle::distanceTo(mp_float_t x, mp_float_t y) const {
+  const mp_float_t dx = x - m_x;
+  const mp_float_t dy = y - m_y;
+  return std::sqrt(dx * dx + dy * dy);
+}
+
 void Turtle::setSpeed(mp_int_t speed) {
   if (speed < 0 || speed > k_maxSpeed) {
     m_speed = 0;
