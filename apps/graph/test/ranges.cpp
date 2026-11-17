@@ -65,6 +65,22 @@ void assert_best_cartesian_range_is(const char * definition, float targetXMin, f
   assert_best_range_is(definitionArray, plotTypeArray, targetXMin, targetXMax, targetYMin, targetYMax, angleUnit);
 }
 
+QUIZ_CASE(graph_implicit_auto_range) {
+  AdHocGraphController graphController;
+  InteractiveCurveViewRange graphRange(&graphController);
+  addFunction("x^2+y^2+x*y+x+y=0", ContinuousFunction::PlotType::Implicit,
+              graphController.functionStore(), graphController.context());
+  graphRange.setDefault();
+  /* The rotated ellipse is only a few units wide. Before fitting implicit
+   * contours, the automatic window made it a 5x6-pixel speck in the middle of
+   * the screen. Keep it comfortably visible instead. */
+  quiz_assert(graphRange.xMin() > -5.0f && graphRange.xMax() < 5.0f);
+  quiz_assert(graphRange.yMin() > -5.0f && graphRange.yMax() < 5.0f);
+  quiz_assert(graphRange.xMax() - graphRange.xMin() > 1.0f);
+  quiz_assert(graphRange.yMax() - graphRange.yMin() > 1.0f);
+  graphController.functionStore()->removeAll();
+}
+
 QUIZ_CASE(graph_ranges_single_function) {
   assert_best_cartesian_range_is("undef", -10, 10, -5.81249952, 4.81249952);
   assert_best_cartesian_range_is("x!", -10, 10, -5.81249952, 4.81249952);

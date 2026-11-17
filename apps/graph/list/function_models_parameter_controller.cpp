@@ -1,6 +1,5 @@
 #include "function_models_parameter_controller.h"
 #include "list_controller.h"
-#include <poincare/layout_helper.h>
 #include <apps/i18n.h>
 #include <assert.h>
 #include <string.h>
@@ -25,7 +24,7 @@ FunctionModelsParameterController::FunctionModelsParameterController(Responder *
   m_selectableTableView.setMargins(0);
   m_selectableTableView.setDecoratorType(ScrollView::Decorator::Type::None);
   for (int i = 0; i < k_numberOfReusableCells; i++) {
-    m_modelCells[i].setParentResponder(&m_selectableTableView);
+    m_modelCells[i].setAlignment(0.0f, 0.5f);
   }
 }
 
@@ -97,11 +96,11 @@ void FunctionModelsParameterController::willDisplayCellForIndex(HighlightCell * 
     return;
   }
   assert(index > 0 && index <= k_numberOfExpressionCells);
-  /* These templates are display-only labels. Parsing them to build prettier
-   * layouts can exhaust the Poincare pool when a row is scrolled in (notably
-   * "x=√(y)"), which resets the app. Keep them as literal layouts. */
+  /* These templates are display-only labels. Building Poincare layouts here
+   * can exhaust the pool when a large parametric model is already displayed,
+   * which resets the app. Keep the menu allocation-free. */
   const char * text = k_modelDescriptions[index - 1];
-  static_cast<ExpressionTableCell *>(cell)->setLayout(LayoutHelper::String(text, strlen(text)));
+  static_cast<EvenOddBufferTextCell *>(cell)->setText(text);
 }
 
 int FunctionModelsParameterController::typeAtLocation(int i, int j) {

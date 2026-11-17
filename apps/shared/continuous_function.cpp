@@ -164,37 +164,6 @@ bool IsEmptyText(const char * text) {
   return *text == 0;
 }
 
-/* Evaluate an implicit expression with x and y bound to numeric values. Using
- * a context avoids cloning and substituting the whole expression tree for
- * every sampled point. */
-class ImplicitEvaluationContext : public ContextWithParent {
-public:
-  ImplicitEvaluationContext(Context * parentContext, double x, double y) :
-    ContextWithParent(parentContext),
-    m_x(Float<float>::Builder(static_cast<float>(x))),
-    m_y(Float<float>::Builder(static_cast<float>(y)))
-  {}
-
-  const Expression expressionForSymbolAbstract(
-      const SymbolAbstract & symbol, bool clone,
-      float unknownSymbolValue = NAN) override {
-    if (symbol.type() == ExpressionNode::Type::Symbol) {
-      if (strcmp(symbol.name(), "x") == 0) {
-        return clone ? m_x.clone() : m_x;
-      }
-      if (strcmp(symbol.name(), "y") == 0) {
-        return clone ? m_y.clone() : m_y;
-      }
-    }
-    return ContextWithParent::expressionForSymbolAbstract(symbol, clone,
-                                                          unknownSymbolValue);
-  }
-
-private:
-  Expression m_x;
-  Expression m_y;
-};
-
 }  // namespace
 
 void ContinuousFunction::DefaultName(char buffer[], size_t bufferSize) {
@@ -656,11 +625,73 @@ void ContinuousFunction::rangeForDisplay(float * xMin, float * xMax, float * yMi
   }
   if (plotType() == PlotType::Implicit) {
     /* Implicit curves are evaluated on a grid, so their extent cannot be
-     * derived from a parameter range. Use a sensible default window. */
-    *xMin = -10.0f;
-    *xMax = 10.0f;
-    *yMin = -10.0f;
-    *yMax = 10.0f;
+     * derived from a parameter range. Probe a default window and keep the
+     * bounding box of the contour crossings. Without this, a small curve such
+     * as a rotated ellipse would only occupy a few pixels and could even fall
+     * between two grid samples. */
+    constexpr float k_halfScanRange = 10.0f;
+    constexpr int k_samples = 32;
+    constexpr float k_step = 2.0f * k_halfScanRange / k_samples;
+    float minX = INFINITY;
+    float maxX = -INFINITY;
+    float minY = INFINITY;
+    float maxY = -INFINITY;
+    ImplicitEvaluator evaluator(this, context);
+    float previousRow[k_samples + 1];
+    for (int column = 0; column <= k_samples; column++) {
+      previousRow[column] = evaluator.evaluate(
+          -k_halfScanRange + column * k_step, k_halfScanRange);
+    }
+    auto addCrossing = [&](float a, float b, float ax, float ay,
+                           float bx, float by) {
+      if (!std::isfinite(a) || !std::isfinite(b) ||
+          (a > 0.0f) == (b > 0.0f) || a == b) {
+        return;
+      }
+      const float t = a / (a - b);
+      const float x = ax + (bx - ax) * t;
+      const float y = ay + (by - ay) * t;
+      minX = std::min(minX, x);
+      maxX = std::max(maxX, x);
+      minY = std::min(minY, y);
+      maxY = std::max(maxY, y);
+    };
+    for (int row = 0; row < k_samples; row++) {
+      const float top = k_halfScanRange - row * k_step;
+      const float bottom = top - k_step;
+      float currentRow[k_samples + 1];
+      for (int column = 0; column <= k_samples; column++) {
+        currentRow[column] = evaluator.evaluate(
+            -k_halfScanRange + column * k_step, bottom);
+      }
+      for (int column = 0; column < k_samples; column++) {
+        const float left = -k_halfScanRange + column * k_step;
+        const float right = left + k_step;
+        const float fTL = previousRow[column];
+        const float fTR = previousRow[column + 1];
+        const float fBR = currentRow[column + 1];
+        const float fBL = currentRow[column];
+        addCrossing(fTL, fTR, left, top, right, top);
+        addCrossing(fTR, fBR, right, top, right, bottom);
+        addCrossing(fBR, fBL, right, bottom, left, bottom);
+        addCrossing(fBL, fTL, left, bottom, left, top);
+      }
+      memcpy(previousRow, currentRow,
+             sizeof(float) * (k_samples + 1));
+    }
+    if (minX <= maxX && minY <= maxY) {
+      const float xMargin = std::max(0.1f, (maxX - minX) * 0.05f);
+      const float yMargin = std::max(0.1f, (maxY - minY) * 0.05f);
+      *xMin = minX - xMargin;
+      *xMax = maxX + xMargin;
+      *yMin = minY - yMargin;
+      *yMax = maxY + yMargin;
+    } else {
+      *xMin = -k_halfScanRange;
+      *xMax = k_halfScanRange;
+      *yMin = -k_halfScanRange;
+      *yMax = k_halfScanRange;
+    }
     return;
   }
   if (plotType() != PlotType::Cartesian) {
@@ -838,33 +869,44 @@ Poincare::Expression ContinuousFunction::sumBetweenBounds(double start, double e
    * the derivative table. */
 }
 
-double ContinuousFunction::evaluateImplicitAt(double x, double y, Poincare::Context * context) const {
-  if (isRawContent()) {
-    return NAN;
-  }
+ContinuousFunction::ImplicitEvaluator::ImplicitEvaluator(
+    const ContinuousFunction * function, Poincare::Context * context) :
+  m_context(context),
+  m_expression()
+{
   /* Cache the raw expression instead of parsing the stored expression again
-   * for every sampled point: the graph evaluates an implicit curve thousands
-   * of times per redraw. It is deliberately not simplified, so that a global
-   * variable named x or y cannot replace the equation's unknowns. */
-  if (m_implicitExpression.isUninitialized()) {
-    m_implicitExpression = expressionClone();
+   * for every sampled point. It is deliberately not simplified, so that a
+   * global variable named x or y cannot replace the equation's unknowns. */
+  if (function->m_implicitExpression.isUninitialized()) {
+    function->m_implicitExpression = function->expressionClone();
   }
-  Expression e = m_implicitExpression;
-  if (e.isUninitialized()) {
+  m_expression = function->m_implicitExpression;
+}
+
+float ContinuousFunction::ImplicitEvaluator::evaluate(float x, float y) {
+  if (m_expression.isUninitialized()) {
     return NAN;
   }
   /* The calculator has a single-precision FPU. Implicit curves are sampled
    * several thousand times per redraw, so evaluating in float instead of
    * emulated double makes a visible difference on the device. */
-  ImplicitEvaluationContext approximationContext(context, x, y);
-  auto approximateSide = [&approximationContext](Expression side) -> float {
-    return PoincareHelpers::ApproximateToScalar<float>(side,
-                                                       &approximationContext);
+  m_context.setValues(x, y);
+  auto approximateSide = [this](Expression side) -> float {
+    return PoincareHelpers::ApproximateToScalar<float>(side, &m_context);
   };
-  if (e.type() == ExpressionNode::Type::Equal) {
-    return approximateSide(e.childAtIndex(0)) - approximateSide(e.childAtIndex(1));
+  if (m_expression.type() == ExpressionNode::Type::Equal) {
+    return approximateSide(m_expression.childAtIndex(0)) -
+           approximateSide(m_expression.childAtIndex(1));
   }
-  return approximateSide(e);
+  return approximateSide(m_expression);
+}
+
+double ContinuousFunction::evaluateImplicitAt(double x, double y, Poincare::Context * context) const {
+  if (isRawContent()) {
+    return NAN;
+  }
+  ImplicitEvaluator evaluator(this, context);
+  return evaluator.evaluate(static_cast<float>(x), static_cast<float>(y));
 }
 
 const FunctionEquation::Piecewise & ContinuousFunction::piecewise(

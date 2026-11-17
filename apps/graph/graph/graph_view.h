@@ -40,6 +40,10 @@ public:
   void setAreaHighlightColor(bool highlightColor) override {};
 private:
   void drawInequalityArea(KDContext * ctx, KDRect rect, Shared::ContinuousFunction * function) const;
+  void drawImplicitSegment(KDContext * ctx, KDRect rect, float x1, float y1, float x2, float y2, KDColor color, bool dotted) const;
+  /* The evaluator and inequality types cannot be named here because
+   * ContinuousFunction and GraphView include each other. */
+  void drawImplicitCell(KDContext * ctx, KDRect rect, void * evaluator, KDCoordinate x, KDCoordinate y, KDCoordinate size, float fTL, float fTR, float fBR, float fBL, int inequality, KDColor areaColor, KDColor boundaryColor, bool strict) const;
   void drawImplicit(KDContext * ctx, KDRect rect, Shared::ContinuousFunction * function) const;
   void drawScatterPlot(KDContext * ctx, KDRect rect, Shared::ContinuousFunction * function) const;
   bool m_tangent;

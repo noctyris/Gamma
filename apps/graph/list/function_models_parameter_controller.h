@@ -50,7 +50,7 @@ private:
     "y≥f(x)"
   };
   MessageTableCell<> m_emptyModelCell;
-  ExpressionTableCell m_modelCells[k_numberOfReusableCells];
+  EvenOddBufferTextCell m_modelCells[k_numberOfReusableCells];
   SelectableTableView m_selectableTableView;
   ListController * m_listController;
   bool m_applyToSelected;

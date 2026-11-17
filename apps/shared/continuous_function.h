@@ -16,6 +16,8 @@
 #include "range_1D.h"
 #include <poincare/symbol.h>
 #include <poincare/coordinate_2D.h>
+#include <poincare/context_with_parent.h>
+#include <poincare/float.h>
 
 namespace Shared {
 
@@ -85,6 +87,52 @@ public:
   /* Evaluate the left member of an implicit equation, or the expression of
    * an implicit inequality. The expression may contain both x and y. */
   double evaluateImplicitAt(double x, double y, Poincare::Context * context) const;
+  /* Reusable evaluator for implicit curves. The x and y values are mutated in
+   * two Float nodes instead of allocating two Poincare nodes at every sampled
+   * point, and the expression is cached for the whole redraw. */
+  class ImplicitEvaluator {
+  public:
+    ImplicitEvaluator(const ContinuousFunction * function, Poincare::Context * context);
+    float evaluate(float x, float y);
+  private:
+    class Context final : public Poincare::ContextWithParent {
+    public:
+      Context(Poincare::Context * parentContext) :
+        Poincare::ContextWithParent(parentContext),
+        m_x(Poincare::Float<float>::Builder(0.0f)),
+        m_y(Poincare::Float<float>::Builder(0.0f)) {}
+      void setValues(float x, float y) {
+        m_x.setValue(x);
+        m_y.setValue(y);
+      }
+      const Poincare::Expression expressionForSymbolAbstract(
+          const Poincare::SymbolAbstract & symbol, bool clone,
+          float unknownSymbolValue = NAN) override {
+        const char * name = symbol.name();
+        if (symbol.type() == Poincare::ExpressionNode::Type::Symbol && name) {
+          if (name[0] == 'x' && name[1] == '\0') {
+            if (clone) {
+              return m_x.clone();
+            }
+            return m_x;
+          }
+          if (name[0] == 'y' && name[1] == '\0') {
+            if (clone) {
+              return m_y.clone();
+            }
+            return m_y;
+          }
+        }
+        return Poincare::ContextWithParent::expressionForSymbolAbstract(
+            symbol, clone, unknownSymbolValue);
+      }
+    private:
+      Poincare::Float<float> m_x;
+      Poincare::Float<float> m_y;
+    };
+    Context m_context;
+    Poincare::Expression m_expression;
+  };
   static I18n::Message ParameterMessageForPlotType(PlotType plotType);
 
   // Scatter plots

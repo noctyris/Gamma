@@ -98,6 +98,22 @@ QUIZ_CASE(graph_equations) {
       parametric->evaluate2DAtParameter(0.0, &context);
   assertNear(parametricValue.x1(), 1.0);
   assertNear(parametricValue.x2(), 0.0);
+
+  /* The template button applies a model to an existing function. Applying the
+   * parametric template again goes through an empty content and a plot-type
+   * change; this must not leave the model in a half-initialized state. */
+  ContinuousFunction * parametricAgain = addFunction(
+      "f(t)=(cos(t),sin(t))", Parametric, &store, &context);
+  const Preferences::AngleUnit angleUnit =
+      Preferences::sharedPreferences()->angleUnit();
+  parametricAgain->setContent("", &context);
+  parametricAgain->setPlotType(Parametric, angleUnit, &context);
+  parametricAgain->setContent("(cos(t),sin(t))", &context);
+  quiz_assert(parametricAgain->plotType() == Parametric);
+  Coordinate2D<double> parametricAgainValue =
+      parametricAgain->evaluate2DAtParameter(0.0, &context);
+  assertNear(parametricAgainValue.x1(), 1.0);
+  assertNear(parametricAgainValue.x2(), 0.0);
   store.removeAll();
 
   // r1(θ)=cos(θ)
