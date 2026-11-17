@@ -30,7 +30,8 @@ public:
   ContinuousFunction(Ion::Storage::Record record = Record()) :
     Function(record),
     m_cache(nullptr),
-    m_piecewise()
+    m_piecewise(),
+    m_implicitExpression()
   {}
   I18n::Message parameterMessageName() const override;
   CodePoint symbol() const override;
@@ -194,9 +195,11 @@ private:
   const ExpressionModel * model() const override { return &m_model; }
   RecordDataBuffer * recordData() const;
   template<typename T> Poincare::Coordinate2D<T> templatedApproximateAtParameter(T t, Poincare::Context * context) const;
+  void resetImplicitExpression() { m_implicitExpression = Poincare::Expression(); }
   Model m_model;
   ContinuousFunctionCache * m_cache;
   mutable FunctionEquation::Piecewise m_piecewise;
+  mutable Poincare::Expression m_implicitExpression;
 };
 
 }

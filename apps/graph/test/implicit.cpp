@@ -29,8 +29,27 @@ QUIZ_CASE(graph_implicit) {
 
   ContinuousFunction * conic = addFunction("x^2+y^2=1", ContinuousFunction::PlotType::Implicit, &store, &context);
   assertNear(conic->evaluateImplicitAt(1.0, 0.0, &context), 0.0);
+  store.removeAll();
+
+  /* Typing an equation in a Cartesian function must switch it to an implicit
+   * plot automatically. */
+  ContinuousFunction * typedConic = addFunction("x^2+y^2=1", Cartesian, &store, &context);
+  quiz_assert(typedConic->isImplicit());
+  assertNear(typedConic->evaluateImplicitAt(0.0, 1.0, &context), 0.0);
   assertNear(conic->evaluateImplicitAt(0.0, 0.0, &context), -1.0);
   assertNear(conic->evaluateImplicitAt(0.6, 0.8, &context), 0.0);
+  store.removeAll();
+
+  /* A bare expression depending on y is implicit as well: it must not keep a
+   * meaningless f(x)= prefix. */
+  ContinuousFunction * typedBare = addFunction("x+y", Cartesian, &store, &context);
+  quiz_assert(typedBare->isImplicit());
+  assertNear(typedBare->evaluateImplicitAt(1.0, -1.0, &context), 0.0);
+  store.removeAll();
+
+  /* Removing y from an implicit expression turns it back into f(x). */
+  ContinuousFunction * typedFunction = addFunction("x^2", ContinuousFunction::PlotType::Implicit, &store, &context);
+  quiz_assert(!typedFunction->isImplicit());
   store.removeAll();
 
   ContinuousFunction * inverse = addFunction("x=√(y)", ContinuousFunction::PlotType::Implicit, &store, &context);

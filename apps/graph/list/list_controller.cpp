@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <escher/metric.h>
 #include <apps/apps_container.h>
+#include <poincare/layout_helper.h>
+#include <algorithm>
 
 using namespace Shared;
 
@@ -57,7 +59,10 @@ ListController::ListController(Responder * parentResponder, ButtonRowController 
   m_expressionCells{},
   m_modelsParameterController(this, this),
   m_modelsStackController(nullptr, &m_modelsParameterController, Palette::BannerFirstVariantText, Palette::BannerFirstVariantBackground, Palette::BannerFirstVariantBorder),
-  m_parameterController(this, this, I18n::Message::FunctionColor, I18n::Message::DeleteFunction, inputEventHandlerDelegate)
+  m_parameterController(this, this, I18n::Message::FunctionColor, I18n::Message::DeleteFunction, inputEventHandlerDelegate),
+  m_templateButtonCells{},
+  m_emptyTemplateCell(),
+  m_isRenaming(false)
 {
   for (int i = 0; i < k_maxNumberOfDisplayableRows; i++) {
     m_expressionCells[i].setLeftMargin(k_expressionMargin);
@@ -80,6 +85,7 @@ void ListController::renameSelectedFunction() {
     return;
   }
 
+  m_isRenaming = true;
   // Increase the size of the name column
   computeTitlesColumnWidth(true);
   selectableTableView()->reloadData();
@@ -118,6 +124,7 @@ bool ListController::textFieldDidFinishEditing(TextField * textField, const char
 
   // Handle any error
   if (error == Ion::Storage::Record::ErrorStatus::None) {
+    m_isRenaming = false;
     bool selectTab = false;
     textField->setEditing(false);
     computeTitlesColumnWidth();
@@ -161,6 +168,7 @@ bool ListController::textFieldDidFinishEditing(TextField * textField, const char
 
 bool ListController::textFieldDidAbortEditing(TextField * textField) {
   assert(textField != nullptr);
+  m_isRenaming = false;
   // Put the name column back to normal size
   computeTitlesColumnWidth();
   selectableTableView()->reloadData();
@@ -202,6 +210,103 @@ HighlightCell * ListController::expressionCells(int index) {
   return &m_expressionCells[index];
 }
 
+KDCoordinate ListController::expressionColumnWidth() {
+  return std::max<KDCoordinate>(0, selectableTableView()->bounds().width() - titlesColumnWidth() - k_templateButtonColumnWidth);
+}
+
+KDCoordinate ListController::columnWidth(int i) {
+  switch (i) {
+  case 0:
+    return titlesColumnWidth();
+  case 1:
+    return expressionColumnWidth();
+  default:
+    assert(i == 2);
+    return k_templateButtonColumnWidth;
+  }
+}
+
+KDCoordinate ListController::cumulatedWidthFromIndex(int i) {
+  KDCoordinate titleWidth = titlesColumnWidth();
+  KDCoordinate expressionWidth = expressionColumnWidth();
+  switch (i) {
+  case 0:
+    return 0;
+  case 1:
+    return titleWidth;
+  case 2:
+    return titleWidth + expressionWidth;
+  default:
+    assert(i == 3);
+    return titleWidth + expressionWidth + k_templateButtonColumnWidth;
+  }
+}
+
+int ListController::indexFromCumulatedWidth(KDCoordinate offsetX) {
+  KDCoordinate titleWidth = titlesColumnWidth();
+  if (offsetX <= titleWidth) {
+    return 0;
+  }
+  if (offsetX <= titleWidth + expressionColumnWidth()) {
+    return 1;
+  }
+  return 2;
+}
+
+int ListController::typeAtLocation(int i, int j) {
+  if (isAddEmptyRow(j)) {
+    return i == 2 ? 5 : i + 2;
+  }
+  return i == 2 ? 4 : i;
+}
+
+HighlightCell * ListController::reusableCell(int index, int type) {
+  if (type == 4) {
+    assert(index >= 0 && index < k_maxNumberOfDisplayableRows);
+    return &m_templateButtonCells[index];
+  }
+  if (type == 5) {
+    return &m_emptyTemplateCell;
+  }
+  return Shared::FunctionListController::reusableCell(index, type);
+}
+
+int ListController::reusableCellCount(int type) {
+  if (type == 4) {
+    return k_maxNumberOfDisplayableRows;
+  }
+  if (type == 5) {
+    return 1;
+  }
+  return Shared::FunctionListController::reusableCellCount(type);
+}
+
+bool ListController::handleEvent(Ion::Events::Event event) {
+  if (selectedRow() >= 0 && selectedColumn() == 2 &&
+      !isAddEmptyRow(selectedRow()) &&
+      (event == Ion::Events::OK || event == Ion::Events::EXE)) {
+    openModelsMenu(true);
+    return true;
+  }
+  return Shared::FunctionListController::handleEvent(event);
+}
+
+void ListController::willDisplayTemplateCellAtIndex(HighlightCell * cell, int j) {
+  assert(cell != nullptr);
+  assert(j >= 0 && j < modelStore()->numberOfModels());
+  ExpiringPointer<ContinuousFunction> function = modelStore()->modelForRecord(modelStore()->recordAtIndex(j));
+  FunctionTemplateButtonCell * buttonCell = static_cast<FunctionTemplateButtonCell *>(cell);
+  buttonCell->setColor(function->isActive() ? function->color() : Palette::SecondaryText);
+}
+
+void ListController::computeTitlesColumnWidth(bool forceMax) {
+  if (forceMax) {
+    Shared::FunctionListController::computeTitlesColumnWidth(true);
+    return;
+  }
+  setTitlesColumnWidth(k_compactTitleColumnWidth);
+}
+
 void ListController::willDisplayTitleCellAtIndex(HighlightCell * cell, int j) {
   assert(cell != nullptr);
   assert(j >= 0 && j < modelStore()->numberOfModels());
@@ -212,7 +317,11 @@ void ListController::willDisplayTitleCellAtIndex(HighlightCell * cell, int j) {
   if (!titleCell->isEditing()) {
     // Set name and color if the name is not being edited
     ExpiringPointer<ContinuousFunction> function = modelStore()->modelForRecord(modelStore()->recordAtIndex(j));
-    setFunctionNameInTextField(function, titleCell->textField());
+    if (m_isRenaming && j != selectedRow()) {
+      titleCell->textField()->setText("");
+    } else {
+      setFunctionNameInTextField(function, titleCell->textField());
+    }
     KDColor functionNameColor = function->isActive() ? function->color() : Palette::SecondaryText;
     titleCell->setColor(functionNameColor);
   }
@@ -226,6 +335,29 @@ void ListController::willDisplayExpressionCellAtIndex(HighlightCell * cell, int 
   ExpiringPointer<ContinuousFunction> f = modelStore()->modelForRecord(modelStore()->recordAtIndex(j));
   KDColor textColor = f->isActive() ? Palette::PrimaryText : Palette::SecondaryText;
   myCell->setTextColor(textColor);
+
+  char prefix[Function::k_maxNameWithArgumentSize + 2];
+  char suffix[8];
+  prefix[0] = 0;
+  suffix[0] = 0;
+  if (f->isImplicit()) {
+    if (f->inequality() != ContinuousFunction::Inequality::None) {
+      strlcpy(suffix, ImplicitInequalityTitle(f->inequality()), sizeof(suffix));
+    }
+  } else if (f->isScatterPlot()) {
+    // A point already carries its coordinates in the expression layout.
+  } else if (f->isInequality()) {
+    strlcpy(prefix, InequalityTitle(f->inequality()), sizeof(prefix));
+  } else {
+    f->nameWithArgument(prefix, sizeof(prefix));
+    strlcat(prefix, "=", sizeof(prefix));
+  }
+  if (m_isRenaming && j == selectedRow()) {
+    prefix[0] = 0;
+    suffix[0] = 0;
+  }
+  myCell->setPrefix(prefix[0] == 0 ? Poincare::Layout() : Poincare::LayoutHelper::String(prefix, strlen(prefix), KDFont::ItalicLargeFont));
+  myCell->setSuffix(suffix[0] == 0 ? Poincare::Layout() : Poincare::LayoutHelper::String(suffix, strlen(suffix), KDFont::LargeFont));
 }
 
 void ListController::setFunctionNameInTextField(ExpiringPointer<ContinuousFunction> function, TextField * textField) {
@@ -248,14 +380,29 @@ void ListController::setFunctionNameInTextField(ExpiringPointer<ContinuousFuncti
 }
 
 void ListController::addEmptyModel() {
+  /* Like the official Grapher, adding a function creates an empty model and
+   * keeps it selected in the list. The inline templates button is then right
+   * next to the empty expression; typing or OK opens the expression editor. */
+  const int newRow = selectedRow();
+  Ion::Storage::Record::ErrorStatus error = modelStore()->addEmptyModel();
+  if (error == Ion::Storage::Record::ErrorStatus::NotEnoughSpaceAvailable) {
+    return;
+  }
+  assert(error == Ion::Storage::Record::ErrorStatus::None);
+  didChangeModelsList();
+  selectableTableView()->selectCellAtLocation(1, newRow);
+  selectableTableView()->reloadData();
+}
+
+void ListController::openModelsMenu(bool applyToSelected) {
+  m_modelsParameterController.setApplyToSelected(applyToSelected);
   Container::activeApp()->displayModalViewController(&m_modelsStackController, 0.f, 0.f, Metric::CommonTopMargin, Metric::CommonRightMargin, 0, Metric::CommonLeftMargin);
 }
 
-void ListController::addModel(int modelIndex) {
+void ListController::setModelContentFromTemplate(Ion::Storage::Record record, int modelIndex) {
   ContinuousFunction::PlotType plotType = ContinuousFunction::PlotType::Cartesian;
   ContinuousFunction::Inequality inequality = ContinuousFunction::Inequality::None;
   bool setInequalityAfterContent = false;
-  bool usePolarName = false;
   const char * content = "";
   switch (modelIndex) {
   case 1:
@@ -293,7 +440,6 @@ void ListController::addModel(int modelIndex) {
   case 10:
     plotType = ContinuousFunction::PlotType::Polar;
     content = "cos(θ)";
-    usePolarName = true;
     break;
   case 11:
     inequality = ContinuousFunction::Inequality::Inferior;
@@ -319,8 +465,20 @@ void ListController::addModel(int modelIndex) {
     assert(modelIndex == 0);
   }
 
+  ExpiringPointer<ContinuousFunction> function = modelStore()->modelForRecord(record);
+  /* Clear the previous content first: switching a piecewise or scatter model
+   * directly to another type would otherwise be ignored. */
+  function->setContent("", App::app()->localContext());
+  function->setPlotType(plotType, Poincare::Preferences::sharedPreferences()->angleUnit(), App::app()->localContext());
+  function->setContent(content, App::app()->localContext());
+  if (setInequalityAfterContent) {
+    function->setInequality(inequality);
+  }
+}
+
+void ListController::addModel(int modelIndex) {
   // The new model takes the place of the "add" row.
-  int newRow = selectedRow();
+  const int newRow = selectedRow();
   Ion::Storage::Record::ErrorStatus error = modelStore()->addEmptyModel();
   if (error == Ion::Storage::Record::ErrorStatus::NotEnoughSpaceAvailable) {
     return;
@@ -328,18 +486,24 @@ void ListController::addModel(int modelIndex) {
   assert(error == Ion::Storage::Record::ErrorStatus::None);
   selectableTableView()->selectCellAtLocation(1, newRow);
   Ion::Storage::Record record = modelStore()->recordAtIndex(modelIndexForRow(newRow));
-  if (usePolarName) {
+  if (modelIndex == 10) {
     char polarName[Poincare::SymbolAbstract::k_maxNameSize];
     ContinuousFunction::DefaultPolarName(polarName, sizeof(polarName));
     record.setBaseNameWithExtension(polarName, Ion::Storage::funcExtension);
     record = modelStore()->recordAtIndex(modelIndexForRow(newRow));
   }
-  ExpiringPointer<ContinuousFunction> function = modelStore()->modelForRecord(record);
-  function->setPlotType(plotType, Poincare::Preferences::sharedPreferences()->angleUnit(), App::app()->localContext());
-  function->setContent(content, App::app()->localContext());
-  if (setInequalityAfterContent) {
-    function->setInequality(inequality);
+  setModelContentFromTemplate(record, modelIndex);
+  didChangeModelsList();
+  selectableTableView()->reloadData();
+  editExpression(Ion::Events::OK);
+}
+
+void ListController::applyModelTemplate(int modelIndex) {
+  if (selectedRow() < 0 || isAddEmptyRow(selectedRow())) {
+    return;
   }
+  Ion::Storage::Record record = modelStore()->recordAtIndex(modelIndexForRow(selectedRow()));
+  setModelContentFromTemplate(record, modelIndex);
   didChangeModelsList();
   selectableTableView()->reloadData();
   editExpression(Ion::Events::OK);

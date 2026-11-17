@@ -55,11 +55,9 @@ void TextFieldFunctionTitleCell::layoutSubviews(bool force) {
   KDRect frame = subviewFrame();
   m_textField.setFrame(frame, force);
   KDCoordinate maxTextFieldX = frame.width() - m_textField.minimalSizeForOptimalDisplay().width();
-  float horizontalAlignment = std::max(
-      0.0f,
-      std::min(
-        1.0f,
-        ((float)(maxTextFieldX - k_textFieldRightMargin))/((float)maxTextFieldX)));
+  float horizontalAlignment = maxTextFieldX > 0
+      ? std::max(0.0f, std::min(1.0f, ((float)(maxTextFieldX - k_textFieldRightMargin))/((float)maxTextFieldX)))
+      : 0.0f;
   m_textField.setAlignment(horizontalAlignment, verticalAlignment());
 }
 

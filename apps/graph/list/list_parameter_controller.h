@@ -20,7 +20,7 @@ protected:
   bool handleEnterOnRow(int rowIndex) override;
 private:
   int totalNumberOfCells() const override {
-    return Shared::ListParameterController::totalNumberOfCells() + 2;
+    return Shared::ListParameterController::totalNumberOfCells() + 3;
   }
   void renameFunction();
   ListController * m_listController;

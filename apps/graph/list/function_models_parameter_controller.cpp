@@ -19,7 +19,8 @@ FunctionModelsParameterController::FunctionModelsParameterController(Responder *
   m_emptyModelCell(I18n::Message::Empty, KDFont::LargeFont),
   m_modelCells{},
   m_selectableTableView(this),
-  m_listController(listController)
+  m_listController(listController),
+  m_applyToSelected(false)
 {
   m_selectableTableView.setMargins(0);
   m_selectableTableView.setDecoratorType(ScrollView::Decorator::Type::None);
@@ -29,7 +30,8 @@ FunctionModelsParameterController::FunctionModelsParameterController(Responder *
 }
 
 const char * FunctionModelsParameterController::title() {
-  return I18n::translate(I18n::Message::AddElement);
+  return I18n::translate(m_applyToSelected ? I18n::Message::FunctionTemplates
+                                            : I18n::Message::AddElement);
 }
 
 void FunctionModelsParameterController::viewWillAppear() {
@@ -45,7 +47,11 @@ bool FunctionModelsParameterController::handleEvent(Ion::Events::Event event) {
   if (event == Ion::Events::OK || event == Ion::Events::EXE) {
     int modelIndex = selectedRow();
     Container::activeApp()->dismissModalViewController();
-    m_listController->addModel(modelIndex);
+    if (m_applyToSelected) {
+      m_listController->applyModelTemplate(modelIndex);
+    } else {
+      m_listController->addModel(modelIndex);
+    }
     return true;
   }
   return false;

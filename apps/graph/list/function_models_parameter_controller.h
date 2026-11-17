@@ -25,6 +25,7 @@ public:
   int reusableCellCount(int type) override;
   void willDisplayCellForIndex(HighlightCell * cell, int index) override;
   int typeAtLocation(int i, int j) override;
+  void setApplyToSelected(bool applyToSelected) { m_applyToSelected = applyToSelected; }
 
 private:
   constexpr static int k_numberOfModels = 15;
@@ -52,6 +53,7 @@ private:
   ExpressionTableCell m_modelCells[k_numberOfReusableCells];
   SelectableTableView m_selectableTableView;
   ListController * m_listController;
+  bool m_applyToSelected;
 };
 
 }

@@ -1,6 +1,8 @@
 #include "graph_view.h"
 #include "../app.h"
 #include <assert.h>
+#include <ion/display.h>
+#include <string.h>
 #include <algorithm>
 #include <cmath>
 
@@ -22,21 +24,6 @@ bool IsInImplicitRegion(double value, Shared::ContinuousFunction::Inequality ine
     return value >= 0.0;
   default:
     return false;
-  }
-}
-
-void DrawPixelSegment(KDContext * ctx, KDRect rect, float x1, float y1, float x2, float y2, KDColor color, bool dotted) {
-  const int steps = (int)std::max(std::abs(x2 - x1), std::abs(y2 - y1));
-  if (steps <= 0) {
-    return;
-  }
-  const int increment = dotted ? 2 : 1;
-  for (int i = 0; i <= steps; i += increment) {
-    const KDCoordinate x = (KDCoordinate)std::round(x1 + (x2 - x1) * i / steps);
-    const KDCoordinate y = (KDCoordinate)std::round(y1 + (y2 - y1) * i / steps);
-    if (x >= rect.left() && x <= rect.right() && y >= rect.top() && y <= rect.bottom()) {
-      ctx->fillRect(KDRect(x, y, 1, 1), color);
-    }
   }
 }
 
@@ -90,28 +77,78 @@ void GraphView::drawInequalityArea(KDContext * ctx, KDRect rect, ContinuousFunct
 }
 
 void GraphView::drawImplicit(KDContext * ctx, KDRect rect, ContinuousFunction * function) const {
-  constexpr KDCoordinate step = 3;
+  constexpr KDCoordinate step = 4;
+  /* Sample the implicit expression on a grid and reuse each sample for the
+   * four neighbouring cells. This divides the number of expression
+   * evaluations by four compared to evaluating every cell corner. */
+  constexpr int k_maxNumberOfSamples = Ion::Display::Width / step + 2;
+  const int numberOfColumns = rect.width() / step;
+  const int numberOfRows = rect.height() / step;
+  if (numberOfColumns <= 0 || numberOfRows <= 0) {
+    return;
+  }
+  assert(numberOfColumns + 1 <= k_maxNumberOfSamples);
   const ContinuousFunction::Inequality inequality = function->inequality();
   const bool strict = inequality == ContinuousFunction::Inequality::Inferior || inequality == ContinuousFunction::Inequality::Superior;
   const KDColor areaColor = KDColor::blend(function->color(), KDColorWhite, 0x60);
   const KDColor boundaryColor = function->color();
 
-  for (KDCoordinate x = rect.left(); x + step <= rect.right(); x += step) {
-    const float x0 = pixelToFloat(Axis::Horizontal, x);
-    const float x1 = pixelToFloat(Axis::Horizontal, x + step);
-    for (KDCoordinate y = rect.top(); y + step <= rect.bottom(); y += step) {
-      const float yTop = pixelToFloat(Axis::Vertical, y);
-      const float yBottom = pixelToFloat(Axis::Vertical, y + step);
-      const double fTL = function->evaluateImplicitAt(x0, yTop, context());
-      const double fTR = function->evaluateImplicitAt(x1, yTop, context());
-      const double fBR = function->evaluateImplicitAt(x1, yBottom, context());
-      const double fBL = function->evaluateImplicitAt(x0, yBottom, context());
-      if (!std::isfinite(fTL) || !std::isfinite(fTR) || !std::isfinite(fBR) || !std::isfinite(fBL)) {
+  /* Use the same thick, antialiased stroke as the explicit curves instead of
+   * drawing one-pixel marching-squares segments. */
+  auto drawSolidBoundary = [this, ctx, rect, boundaryColor](float x1, float y1, float x2, float y2) {
+    drawSegment(ctx, rect,
+        pixelToFloat(Axis::Horizontal, x1), pixelToFloat(Axis::Vertical, y1),
+        pixelToFloat(Axis::Horizontal, x2), pixelToFloat(Axis::Vertical, y2),
+        boundaryColor, true);
+  };
+  auto drawDottedBoundary = [this, ctx, rect, boundaryColor](float x1, float y1, float x2, float y2) {
+    const int steps = (int)std::max(std::abs(x2 - x1), std::abs(y2 - y1));
+    if (steps <= 0) {
+      return;
+    }
+    for (int i = 0; i <= steps; i += 2) {
+      const float x = x1 + (x2 - x1) * i / steps;
+      const float y = y1 + (y2 - y1) * i / steps;
+      drawDot(ctx, rect,
+          pixelToFloat(Axis::Horizontal, x), pixelToFloat(Axis::Vertical, y),
+          boundaryColor, Size::Tiny);
+    }
+  };
+
+  float previousRow[k_maxNumberOfSamples];
+  float currentRow[k_maxNumberOfSamples];
+
+  auto xAtColumn = [this, rect](int column) {
+    return pixelToFloat(Axis::Horizontal, rect.left() + column * step);
+  };
+  auto yAtRow = [this, rect](int row) {
+    return pixelToFloat(Axis::Vertical, rect.top() + row * step);
+  };
+
+  for (int column = 0; column <= numberOfColumns; column++) {
+    previousRow[column] = (float)function->evaluateImplicitAt(
+        xAtColumn(column), yAtRow(0), context());
+  }
+
+  for (int row = 0; row < numberOfRows; row++) {
+    for (int column = 0; column <= numberOfColumns; column++) {
+      currentRow[column] = (float)function->evaluateImplicitAt(
+          xAtColumn(column), yAtRow(row + 1), context());
+    }
+    const KDCoordinate y = rect.top() + row * step;
+    for (int column = 0; column < numberOfColumns; column++) {
+      const KDCoordinate x = rect.left() + column * step;
+      const float fTL = previousRow[column];
+      const float fTR = previousRow[column + 1];
+      const float fBR = currentRow[column + 1];
+      const float fBL = currentRow[column];
+      if (!std::isfinite(fTL) || !std::isfinite(fTR) ||
+          !std::isfinite(fBR) || !std::isfinite(fBL)) {
         continue;
       }
 
       if (inequality != ContinuousFunction::Inequality::None) {
-        const double center = (fTL + fTR + fBR + fBL) * 0.25;
+        const float center = (fTL + fTR + fBR + fBL) * 0.25f;
         if (IsInImplicitRegion(center, inequality)) {
           ctx->fillRect(KDRect(x + step / 2, y + step / 2, 1, 1), areaColor);
         }
@@ -120,11 +157,11 @@ void GraphView::drawImplicit(KDContext * ctx, KDRect rect, ContinuousFunction * 
       struct Crossing { float x; float y; };
       Crossing crossings[4];
       int numberOfCrossings = 0;
-      auto addCrossing = [&](double a, double b, float ax, float ay, float bx, float by) {
-        if ((a > 0.0) == (b > 0.0) || a == b || numberOfCrossings >= 4) {
+      auto addCrossing = [&](float a, float b, float ax, float ay, float bx, float by) {
+        if ((a > 0.0f) == (b > 0.0f) || a == b || numberOfCrossings >= 4) {
           return;
         }
-        const float t = (float)(a / (a - b));
+        const float t = a / (a - b);
         crossings[numberOfCrossings++] = {ax + (bx - ax) * t, ay + (by - ay) * t};
       };
       addCrossing(fTL, fTR, x, y, x + step, y);
@@ -133,7 +170,11 @@ void GraphView::drawImplicit(KDContext * ctx, KDRect rect, ContinuousFunction * 
       addCrossing(fBL, fTL, x, y + step, x, y);
 
       auto drawBoundary = [&](const Crossing & a, const Crossing & b) {
-        DrawPixelSegment(ctx, rect, a.x, a.y, b.x, b.y, boundaryColor, strict);
+        if (strict) {
+          drawDottedBoundary(a.x, a.y, b.x, b.y);
+        } else {
+          drawSolidBoundary(a.x, a.y, b.x, b.y);
+        }
       };
       if (numberOfCrossings == 2) {
         drawBoundary(crossings[0], crossings[1]);
@@ -142,6 +183,7 @@ void GraphView::drawImplicit(KDContext * ctx, KDRect rect, ContinuousFunction * 
         drawBoundary(crossings[2], crossings[3]);
       }
     }
+    memcpy(previousRow, currentRow, sizeof(float) * (numberOfColumns + 1));
   }
 }
 

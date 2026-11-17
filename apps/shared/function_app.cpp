@@ -32,9 +32,10 @@ void FunctionApp::willBecomeInactive() {
 }
 
 bool FunctionApp::isAcceptableExpression(const Poincare::Expression expression) {
-  /* We forbid functions whose type is equal because the input "2+f(3)" would be
-   * simplify to an expression with an nested equal node which makes no sense. */
-  if (!TextFieldDelegateApp::ExpressionCanBeSerialized(expression, false, Expression(), localContext()) || expression.type() == ExpressionNode::Type::Equal) {
+  /* Accept equations so that an implicit equation such as x^2+y^2=1 can be
+   * typed directly in the function list. Applications that do not support
+   * equations (such as Sequences) override this method to reject them. */
+  if (!TextFieldDelegateApp::ExpressionCanBeSerialized(expression, false, Expression(), localContext())) {
     return false;
   }
   return TextFieldDelegateApp::isAcceptableExpression(expression);

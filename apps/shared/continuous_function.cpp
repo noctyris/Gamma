@@ -1,6 +1,7 @@
 #include "continuous_function.h"
 #include "poincare_helpers.h"
 #include <apps/constant.h>
+#include <poincare/context_with_parent.h>
 #include <poincare/derivative.h>
 #include <poincare/float.h>
 #include <poincare/integer.h>
@@ -91,6 +92,68 @@ bool FindTopLevelInequality(const char * text, int * position,
   return false;
 }
 
+bool FindTopLevelEqual(const char * text) {
+  int parenthesisDepth = 0;
+  int bracketDepth = 0;
+  int braceDepth = 0;
+  for (int i = 0; text[i] != 0; i++) {
+    char c = text[i];
+    if (c == '(') {
+      parenthesisDepth++;
+      continue;
+    }
+    if (c == ')') {
+      parenthesisDepth--;
+      continue;
+    }
+    if (c == '[') {
+      bracketDepth++;
+      continue;
+    }
+    if (c == ']') {
+      bracketDepth--;
+      continue;
+    }
+    if (c == '{') {
+      braceDepth++;
+      continue;
+    }
+    if (c == '}') {
+      braceDepth--;
+      continue;
+    }
+    if (c == '=' && parenthesisDepth == 0 && bracketDepth == 0 &&
+        braceDepth == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool DependsOnY(const char * text) {
+  if (!text) {
+    return false;
+  }
+  for (int i = 0; text[i] != 0; i++) {
+    if (text[i] != 'y') {
+      continue;
+    }
+    bool previousIsNameChar =
+        i > 0 && ((text[i - 1] >= 'a' && text[i - 1] <= 'z') ||
+                  (text[i - 1] >= 'A' && text[i - 1] <= 'Z') ||
+                  text[i - 1] == '_');
+    bool nextIsNameChar =
+        text[i + 1] != 0 &&
+        ((text[i + 1] >= 'a' && text[i + 1] <= 'z') ||
+         (text[i + 1] >= 'A' && text[i + 1] <= 'Z') ||
+         (text[i + 1] >= '0' && text[i + 1] <= '9') || text[i + 1] == '_');
+    if (!previousIsNameChar && !nextIsNameChar) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool IsEmptyText(const char * text) {
   if (!text) {
     return true;
@@ -100,6 +163,37 @@ bool IsEmptyText(const char * text) {
   }
   return *text == 0;
 }
+
+/* Evaluate an implicit expression with x and y bound to numeric values. Using
+ * a context avoids cloning and substituting the whole expression tree for
+ * every sampled point. */
+class ImplicitEvaluationContext : public ContextWithParent {
+public:
+  ImplicitEvaluationContext(Context * parentContext, double x, double y) :
+    ContextWithParent(parentContext),
+    m_x(Float<float>::Builder(static_cast<float>(x))),
+    m_y(Float<float>::Builder(static_cast<float>(y)))
+  {}
+
+  const Expression expressionForSymbolAbstract(
+      const SymbolAbstract & symbol, bool clone,
+      float unknownSymbolValue = NAN) override {
+    if (symbol.type() == ExpressionNode::Type::Symbol) {
+      if (strcmp(symbol.name(), "x") == 0) {
+        return clone ? m_x.clone() : m_x;
+      }
+      if (strcmp(symbol.name(), "y") == 0) {
+        return clone ? m_y.clone() : m_y;
+      }
+    }
+    return ContextWithParent::expressionForSymbolAbstract(symbol, clone,
+                                                          unknownSymbolValue);
+  }
+
+private:
+  Expression m_x;
+  Expression m_y;
+};
 
 }  // namespace
 
@@ -264,6 +358,7 @@ Poincare::Layout ContinuousFunction::layout() {
 
 void ContinuousFunction::tidy() {
   m_piecewise.reset();
+  resetImplicitExpression();
   ExpressionModelHandle::tidy();
 }
 
@@ -298,6 +393,7 @@ void ContinuousFunction::setInequality(Inequality inequality) {
   setCache(nullptr);
   m_piecewise.reset();
   m_model.tidy();
+  resetImplicitExpression();
 }
 
 void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences::AngleUnit angleUnit, Context * context) {
@@ -310,6 +406,7 @@ void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences
     recordData()->setPlotType(PlotType::Scatter);
     setCache(nullptr);
     m_model.tidy();
+    resetImplicitExpression();
     m_piecewise.reset();
     return;
   }
@@ -322,6 +419,7 @@ void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences
     recordData()->setPlotType(newPlotType);
     setCache(nullptr);
     m_model.tidy();
+    resetImplicitExpression();
     m_piecewise.reset();
     setTMin(-INFINITY);
     setTMax(INFINITY);
@@ -338,6 +436,7 @@ void ContinuousFunction::setPlotType(PlotType newPlotType, Poincare::Preferences
 
   // Recompute the layouts
   m_model.tidy();
+  resetImplicitExpression();
 
   // Recompute the definition domain
   double tMin = newPlotType == PlotType::Cartesian ? -INFINITY : 0.0;
@@ -743,19 +842,24 @@ double ContinuousFunction::evaluateImplicitAt(double x, double y, Poincare::Cont
   if (isRawContent()) {
     return NAN;
   }
-  /* Work on a clone: replaceSymbolWithExpression mutates the tree in place and
-   * expressionReduced returns a cached handle. Mutating the cache would turn
-   * the implicit equation into a constant after the first evaluation. */
-  Expression e = expressionClone();
+  /* Cache the raw expression instead of parsing the stored expression again
+   * for every sampled point: the graph evaluates an implicit curve thousands
+   * of times per redraw. It is deliberately not simplified, so that a global
+   * variable named x or y cannot replace the equation's unknowns. */
+  if (m_implicitExpression.isUninitialized()) {
+    m_implicitExpression = expressionClone();
+  }
+  Expression e = m_implicitExpression;
   if (e.isUninitialized()) {
     return NAN;
   }
-  /* The model stores either the full equation (x^2+y^2=1) or a single
-   * expression to compare to zero (x+y for x+y<=0). */
-  auto approximateSide = [context, x, y](Expression side) -> double {
-    side = side.replaceSymbolWithExpression(Symbol::Builder('x'), Float<double>::Builder(x));
-    side = side.replaceSymbolWithExpression(Symbol::Builder('y'), Float<double>::Builder(y));
-    return PoincareHelpers::ApproximateToScalar<double>(side, context);
+  /* The calculator has a single-precision FPU. Implicit curves are sampled
+   * several thousand times per redraw, so evaluating in float instead of
+   * emulated double makes a visible difference on the device. */
+  ImplicitEvaluationContext approximationContext(context, x, y);
+  auto approximateSide = [&approximationContext](Expression side) -> float {
+    return PoincareHelpers::ApproximateToScalar<float>(side,
+                                                       &approximationContext);
   };
   if (e.type() == ExpressionNode::Type::Equal) {
     return approximateSide(e.childAtIndex(0)) - approximateSide(e.childAtIndex(1));
@@ -804,6 +908,7 @@ Ion::Storage::Record::ErrorStatus ContinuousFunction::setRawContent(
   setCache(nullptr);
   m_piecewise.reset();
   m_model.tidy();
+  resetImplicitExpression();
   return Ion::Storage::Record::ErrorStatus::None;
 }
 
@@ -826,14 +931,24 @@ void ContinuousFunction::resetRawFlag() {
   setCache(nullptr);
   m_piecewise.reset();
   m_model.tidy();
+  resetImplicitExpression();
 }
 
 Ion::Storage::Record::ErrorStatus ContinuousFunction::setContent(const char * c, Poincare::Context * context) {
   setCache(nullptr);
   m_piecewise.reset();
   m_model.tidy();
+  resetImplicitExpression();
 
   if (IsEmptyText(c)) {
+    /* An empty implicit row has no meaningful prefix. Turn it back into a
+     * regular f(x)= row so the list stays readable. */
+    if (isImplicit()) {
+      recordData()->setInequality(Inequality::None);
+      recordData()->setPlotType(PlotType::Cartesian);
+      setTMin(-INFINITY);
+      setTMax(INFINITY);
+    }
     resetRawFlag();
     return setExpressionText("", context,
                              isImplicit() ? CodePoint(0) : symbol());
@@ -867,6 +982,28 @@ Ion::Storage::Record::ErrorStatus ContinuousFunction::setContent(const char * c,
     return setRawContent(c, Inequality::Point);
   }
 
+  /* Editing a point cloud with a regular expression turns it back into a
+   * curve. */
+  if (plotType() == PlotType::Scatter) {
+    resetRawFlag();
+  }
+
+  /* Typing an equation directly in a function switches it to an implicit
+   * plot. This is what lets the user type "x^2+y^2=1" in a new Cartesian
+   * function instead of getting a syntax error. */
+  if (!isImplicit() && FindTopLevelEqual(c)) {
+    setPlotType(PlotType::Implicit,
+                Preferences::sharedPreferences()->angleUnit(), context);
+  }
+
+  /* A bare expression depending on y is an implicit equation as well. This
+   * keeps "x+y" from being displayed with a meaningless f(x)= prefix. */
+  if (!isImplicit() && plotType() != PlotType::Polar &&
+      plotType() != PlotType::Parametric && DependsOnY(c)) {
+    setPlotType(PlotType::Implicit,
+                Preferences::sharedPreferences()->angleUnit(), context);
+  }
+
   if (isImplicit()) {
     int inequalityPosition = 0;
     int inequalityLength = 0;
@@ -884,6 +1021,15 @@ Ion::Storage::Record::ErrorStatus ContinuousFunction::setContent(const char * c,
         return setExpressionText(leftMember, context, 0);
       }
     }
+  }
+
+  /* Removing y and the equal sign from an implicit expression turns it back
+   * into a Cartesian function f(x)=... */
+  if (isImplicit() && !FindTopLevelEqual(c) && !DependsOnY(c)) {
+    recordData()->setInequality(Inequality::None);
+    recordData()->setPlotType(PlotType::Cartesian);
+    setTMin(-INFINITY);
+    setTMax(INFINITY);
   }
 
   resetRawFlag();

@@ -59,6 +59,8 @@ public:
   InputViewController * inputViewController() override {
     return &m_inputViewController;
   }
+protected:
+  bool isAcceptableExpression(const Poincare::Expression expression) override;
 private:
   App(Snapshot * snapshot);
   Shared::PoincareLocalPool m_poincarePool;

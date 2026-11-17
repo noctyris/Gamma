@@ -117,8 +117,10 @@ void FunctionListController::willDisplayCellAtLocation(HighlightCell * cell, int
   if (!isAddEmptyRow(j)) {
     if (i == 0) {
       willDisplayTitleCellAtIndex(cell, j);
-    } else {
+    } else if (i == 1) {
       willDisplayExpressionCellAtIndex(cell, j);
+    } else {
+      willDisplayTemplateCellAtIndex(cell, j);
     }
   }
   EvenOddCell * myCell = (EvenOddCell *)cell;
@@ -225,8 +227,8 @@ void FunctionListController::willExitResponderChain(Responder * nextFirstRespond
 void FunctionListController::tableViewDidChangeSelection(SelectableTableView * t, int previousSelectedCellX, int previousSelectedCellY, bool withinTemporarySelection) {
   // Update memoization of cell heights
   ExpressionModelListController::tableViewDidChangeSelection(t, previousSelectedCellX, previousSelectedCellY, withinTemporarySelection);
-  // Do not select the cell left of the "addEmptyFunction" cell
-  if (isAddEmptyRow(selectedRow()) && selectedColumn() == 0) {
+  // Do not select an empty cell of the "addEmptyFunction" row
+  if (isAddEmptyRow(selectedRow()) && selectedColumn() != 1) {
     t->selectCellAtLocation(1, numberOfRows()-1);
   }
 }

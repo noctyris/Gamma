@@ -78,4 +78,13 @@ NestedMenuController * App::variableBoxForInputEventHandler(InputEventHandler * 
   return varBox;
 }
 
+bool App::isAcceptableExpression(const Poincare::Expression expression) {
+  /* Sequences are not equations: keep rejecting an equal sign in the edited
+   * expression even though the shared function app now accepts it. */
+  if (expression.type() == Poincare::ExpressionNode::Type::Equal) {
+    return false;
+  }
+  return Shared::FunctionApp::isAcceptableExpression(expression);
+}
+
 }
